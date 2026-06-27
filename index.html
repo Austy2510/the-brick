@@ -1,0 +1,2127 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>THE BRICK | Absolute Luxury Commitment</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&family=Inter:wght@300;400&family=JetBrains+Mono:wght@400;500&family=Cormorant+SC:wght@300;400;600&family=Cormorant+Garamond:ital,wght@1,400&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "surface": "#0D0C0B",
+          "surface-warm": "#1A1310",
+          "secondary": "#C9A96E",
+          "on-surface": "#E8DDD0",
+          "outline": "#7A6E65",
+          "brick-red": "#B94F2A",
+          "parchment": "#D4C5A9"
+        },
+        fontFamily: {
+          "display": ["Cormorant SC", "serif"],
+          "body": ["Inter", "sans-serif"],
+          "mono": ["JetBrains Mono", "monospace"],
+          "serif-italic": ["Cormorant Garamond", "serif"],
+        }
+      }
+    }
+  }
+</script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    background-color: #0D0C0B;
+    color: #E8DDD0;
+    overflow-x: hidden;
+    font-family: 'Inter', sans-serif;
+    cursor: none;
+  }
+  @media (pointer: coarse) {
+    body { cursor: auto; }
+  }
+
+  /* ── GRAIN ── */
+  .grain-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-image: url("https://www.transparenttextures.com/patterns/asfalt-dark.png");
+    opacity: 0.04;
+    pointer-events: none;
+    z-index: 9000;
+  }
+
+  /* ── PROGRESS BAR ── */
+  #progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 2px;
+    width: 0%;
+    background: #C9A96E;
+    z-index: 9999;
+    transition: width 80ms linear;
+  }
+
+  /* ── PRELOADER ── */
+  #preloader {
+    position: fixed;
+    inset: 0;
+    background: #0D0C0B;
+    z-index: 8999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+  #preloader canvas {
+    width: 360px;
+    height: 220px;
+    display: block;
+  }
+  .intro-headline {
+    font-family: 'Cormorant SC', serif;
+    font-size: clamp(2rem, 6vw, 5rem);
+    letter-spacing: 0.5em;
+    color: #E8DDD0;
+    margin-top: 2.5rem;
+    opacity: 0;
+  }
+  .intro-headline .char {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  /* ── SPOTLIGHT ── */
+  .spotlight {
+    position: absolute;
+    top: -60px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(ellipse at top, rgba(201,169,110,0.18) 0%, transparent 70%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: #0D0C0B; }
+  ::-webkit-scrollbar-thumb { background: #C9A96E33; }
+
+  /* ── GRADIENT BLEEDS ── */
+  .bleed-down { height: 0; }
+  .bleed-up   { height: 0; }
+
+  /* ── BRICK FRAME ── */
+  .brick-artifact-frame {
+    border: 1px solid rgba(201,169,110,0.12);
+    position: relative;
+    transition: transform 0.3s ease;
+  }
+  .brick-artifact-frame::before {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border: 1px solid rgba(201,169,110,0.05);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* ── SCROLL HINT ── */
+  @keyframes pulse-scroll {
+    0%, 100% { opacity: 0.3; transform: translateY(0); }
+    50%       { opacity: 1;   transform: translateY(8px); }
+  }
+  .animate-pulse-scroll { animation: pulse-scroll 2s ease-in-out infinite; }
+
+  /* ── PARALLAX SECTION STACKING ── */
+  .parallax-panel {
+    position: sticky;
+    top: 0;
+    min-height: 100vh;
+    will-change: transform;
+  }
+  .parallax-panel::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 120px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .parallax-panel.is-overlapping::after {
+    opacity: 1;
+  }
+  #hero        { z-index: 1; }
+  #origin      { z-index: 2; }
+  #specs       { z-index: 3; }
+  #testimonials{ z-index: 4; }
+  #inspection  { z-index: 5; }
+  #certificate { z-index: 6; }
+  #scarcity    { z-index: 7; min-height: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 6rem; padding-bottom: 6rem; }
+  #acquire     { z-index: 8; min-height: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 6rem; padding-bottom: 6rem; }
+
+  /* ── ORIGIN SECTION ── */
+  #origin {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0D0C0B;
+    position: sticky;
+    top: 0;
+  }
+  .origin-words {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0 clamp(1.5rem, 8vw, 8rem);
+    width: 100%;
+  }
+  .origin-word {
+    font-family: 'Cormorant SC', serif;
+    font-size: clamp(3.5rem, 12vw, 11rem);
+    line-height: 1;
+    color: #E8DDD0;
+    letter-spacing: 0.05em;
+    opacity: 0;
+    transform: translateY(24px);
+    will-change: transform, opacity;
+  }
+
+  /* ── SPEC ROWS ── */
+  .spec-row {
+    opacity: 0;
+    transform: translateX(-20px);
+    will-change: transform, opacity;
+  }
+
+  /* ── TESTIMONIAL CARDS ── */
+  .testimonial-card {
+    opacity: 0;
+    transform: translateY(32px);
+    will-change: transform, opacity;
+  }
+
+  /* ── CERTIFICATE ── */
+  .cert-card {
+    opacity: 0;
+    transform: rotate(-4deg) translateY(40px);
+    will-change: transform, opacity;
+  }
+  .wax-seal {
+    background: radial-gradient(circle at 30% 30%, #D84315, #B94F2A, #8B2E10);
+    box-shadow: 2px 4px 12px rgba(0,0,0,0.5), inset -2px -2px 4px rgba(0,0,0,0.3);
+  }
+
+  /* ── MINI GAME ── */
+  #game-brick-surface {
+    position: relative;
+    width: 100%;
+    max-width: 520px;
+    height: 280px;
+    margin: 0 auto;
+    background: #B94F2A;
+    cursor: crosshair;
+    overflow: hidden;
+  }
+  .brick-texture-line {
+    position: absolute;
+    background: rgba(0,0,0,0.15);
+    left: 0; right: 0;
+    height: 1px;
+  }
+  .imperfection {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgba(30,10,5,0.55);
+    cursor: crosshair;
+    transition: transform 120ms, background 120ms, box-shadow 120ms;
+    border: 1px solid rgba(0,0,0,0.2);
+  }
+  .imperfection:hover {
+    transform: scale(1.4);
+    background: rgba(30,10,5,0.8);
+    box-shadow: 0 0 8px rgba(201,169,110,0.4);
+  }
+  .imperfection.found {
+    background: #C9A96E !important;
+    border-color: #C9A96E;
+    cursor: default;
+    transform: scale(1.3);
+    box-shadow: 0 0 12px rgba(201,169,110,0.6);
+  }
+  @keyframes timer-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .timer-urgent { animation: timer-pulse 0.5s ease infinite; color: #B94F2A !important; }
+
+  /* ── PRICE COUNTER ── */
+  #price-counter { font-variant-numeric: tabular-nums; }
+
+  /* ── SOUND TOGGLE ── */
+  #sound-toggle {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 1.5rem;
+    z-index: 200;
+    background: transparent;
+    border: 1px solid rgba(201,169,110,0.3);
+    color: #C9A96E;
+    padding: 0.3rem 0.7rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    transition: border-color 200ms, color 200ms;
+  }
+  #sound-toggle:hover { border-color: #C9A96E; }
+
+  /* ── BUTTONS ── */
+  .btn-ghost {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #C9A96E;
+    padding: 1rem 2.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    color: #C9A96E;
+    background: transparent;
+    cursor: pointer;
+    transition: color 400ms;
+  }
+  .btn-ghost::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: #C9A96E;
+    transform: translateY(101%);
+    transition: transform 400ms ease;
+  }
+  .btn-ghost:hover { color: #0D0C0B; }
+  .btn-ghost:hover::after { transform: translateY(0); }
+  .btn-ghost span { position: relative; z-index: 1; }
+
+  .btn-solid {
+    background: #C9A96E;
+    color: #0D0C0B;
+    padding: 1.25rem 3.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    border: none;
+    cursor: pointer;
+    transition: opacity 200ms, transform 200ms;
+  }
+  .btn-solid:hover { opacity: 0.88; transform: scale(1.01); }
+
+  .btn-secondary {
+    border: 1px solid #7A6E65;
+    padding: 0.7rem 2rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    color: #7A6E65;
+    background: transparent;
+    cursor: pointer;
+    transition: border-color 200ms, color 200ms;
+    margin-top: 1.5rem;
+  }
+  .btn-secondary:hover { border-color: #C9A96E; color: #C9A96E; }
+
+  /* ── SECTION EYEBROW ── */
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #C9A96E;
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  /* ── CURSOR GLOW ── */
+  #cursor-glow {
+    position: fixed;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,169,110,0.12) 0%, rgba(201,169,110,0.04) 35%, transparent 70%);
+    pointer-events: none;
+    z-index: 8998;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.3s;
+    mix-blend-mode: screen;
+  }
+
+  /* ── CUSTOM CURSOR DOT + RING ── */
+  #cursor-dot {
+    position: fixed;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #E8DDD0;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.15s ease, background 0.15s ease;
+    mix-blend-mode: difference;
+  }
+  #cursor-ring {
+    position: fixed;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid rgba(232, 221, 208, 0.5);
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: width 0.25s ease, height 0.25s ease, border-color 0.25s ease, background 0.15s ease;
+    mix-blend-mode: difference;
+  }
+  /* Cursor states */
+  #cursor-dot.state-pointer {
+    transform: translate(-50%, -50%) scale(1.8);
+    background: #C9A96E;
+  }
+  #cursor-ring.state-pointer {
+    width: 44px;
+    height: 44px;
+    border-color: #C9A96E;
+    background: rgba(201,169,110,0.06);
+  }
+  #cursor-dot.state-crosshair {
+    width: 2px;
+    height: 2px;
+    background: #E8DDD0;
+  }
+  #cursor-ring.state-crosshair {
+    width: 40px;
+    height: 40px;
+    border-color: rgba(232,221,208,0.7);
+    border-width: 1px;
+    background: transparent;
+  }
+  #cursor-ring.state-crosshair::before,
+  #cursor-ring.state-crosshair::after {
+    content: '';
+    position: absolute;
+    background: rgba(232,221,208,0.35);
+  }
+  #cursor-ring.state-crosshair::before {
+    width: 1px;
+    height: 8px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  #cursor-ring.state-crosshair::after {
+    width: 8px;
+    height: 1px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  #cursor-dot.state-grab {
+    width: 10px;
+    height: 10px;
+    background: transparent;
+    border: 1px solid #C9A96E;
+  }
+  #cursor-ring.state-grab {
+    width: 46px;
+    height: 46px;
+    border-style: dashed;
+    border-color: rgba(201,169,110,0.35);
+  }
+  @media (pointer: coarse) {
+    #cursor-dot, #cursor-ring { display: none; }
+  }
+
+  /* ── MOBILE MENU ── */
+  .hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    padding: 8px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    z-index: 60;
+  }
+  .hamburger span {
+    display: block;
+    width: 20px;
+    height: 1.5px;
+    background: #C9A96E;
+    transition: all 0.3s ease;
+  }
+  .hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(4px, 5px); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(4px, -5px); }
+
+  .mobile-drawer {
+    position: fixed;
+    top: 0; right: 0;
+    width: 280px;
+    height: 100%;
+    background: #0D0C0B;
+    border-left: 1px solid rgba(201,169,110,0.1);
+    z-index: 55;
+    transform: translateX(100%);
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 6rem 2rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  .mobile-drawer.open { transform: translateX(0); }
+  .mobile-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 54;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s;
+  }
+  .mobile-backdrop.open { opacity: 1; pointer-events: auto; }
+
+  @media (max-width: 767px) {
+    .hamburger { display: flex; }
+  }
+
+  /* ── SCARCITY PULSE ── */
+  @keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    14% { transform: scale(1.03); }
+    28% { transform: scale(1); }
+    42% { transform: scale(1.05); }
+    56% { transform: scale(1); }
+  }
+  .scarcity-pulse { animation: heartbeat 2s ease-in-out infinite; }
+
+  /* ── VIEWER NOTIFICATION ── */
+  .viewer-notif {
+    position: fixed;
+    bottom: 2rem;
+    left: 2rem;
+    background: rgba(26,19,16,0.95);
+    border: 1px solid rgba(201,169,110,0.2);
+    padding: 0.8rem 1.2rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: #C9A96E;
+    letter-spacing: 0.08em;
+    z-index: 100;
+    transform: translateY(120%);
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+  }
+  .viewer-notif.show { transform: translateY(0); }
+  .viewer-notif .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #B94F2A;
+    margin-right: 8px;
+    animation: blink-dot 1.5s infinite;
+  }
+  @keyframes blink-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ── CONFETTI / VICTORY ── */
+  .confetti-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 8997;
+    overflow: hidden;
+  }
+  .confetti-piece {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    top: -10px;
+    animation: confetti-fall linear forwards;
+  }
+  @keyframes confetti-fall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* ── ORIGIN EMBERS ── */
+  .ember {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: #C9A96E;
+    opacity: 0;
+    pointer-events: none;
+  }
+  @keyframes ember-rise {
+    0% { opacity: 0; transform: translateY(0) scale(0.5); }
+    20% { opacity: 0.8; }
+    100% { opacity: 0; transform: translateY(-200px) scale(0); }
+  }
+
+  /* ── REDUCED MOTION ── */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+    #cursor-glow { display: none; }
+  }
+
+  /* ── CUSTOM CURSORS ── */
+  .cursor-crosshair { cursor: none !important; }
+  .cursor-pointer { cursor: none !important; }
+  .cursor-grab { cursor: none !important; }
+  
+  #cursor-glow.crosshair { 
+    width: 40px; height: 40px; 
+    border: 1px solid #C9A96E; 
+    background: transparent; 
+    filter: none; 
+    mix-blend-mode: normal;
+  }
+  #cursor-glow.grab { transform: scale(1.5); }
+  #cursor-glow.pointer { background: #C9A96E; filter: drop-shadow(0 0 10px #C9A96E); }
+
+  /* ── INSPECTOR BADGE ── */
+  #inspector-badge {
+    position: fixed;
+    top: 6rem;
+    right: 2rem;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1.5s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  #inspector-badge.show {
+    opacity: 1;
+  }
+  .badge-inner {
+    background: linear-gradient(135deg, #1A1310, #0D0C0B);
+    border: 1px solid #C9A96E;
+    padding: 0.6rem 1.2rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: #C9A96E;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+  }
+  .badge-inner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(201,169,110,0.15), transparent);
+    animation: badge-shimmer 3s ease-in-out infinite;
+  }
+  @keyframes badge-shimmer {
+    0% { transform: translateX(-50%); }
+    100% { transform: translateX(50%); }
+  }
+
+  /* ── KONAMI SECRET ── */
+  #konami-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(13,12,11,0.95);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.8s ease;
+  }
+  #konami-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .konami-text {
+    font-family: 'Cormorant SC', serif;
+    font-size: clamp(1.2rem, 3vw, 2.5rem);
+    color: #C9A96E;
+    text-align: center;
+    letter-spacing: 0.12em;
+    line-height: 1.8;
+    max-width: 600px;
+    padding: 2rem;
+    border: 1px solid rgba(201,169,110,0.2);
+    position: relative;
+  }
+  .konami-text::before, .konami-text::after {
+    content: '✦';
+    display: block;
+    color: #C9A96E;
+    font-size: 1.5rem;
+    margin: 0.5rem 0;
+  }
+
+  /* ── SPEC BRICK LABEL ── */
+  .spec-face-label {
+    position: absolute;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    color: #C9A96E;
+    text-transform: uppercase;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .spec-face-label.active {
+    opacity: 1;
+  }
+</style>
+</head>
+<body>
+
+<!-- CURSOR GLOW -->
+<div id="cursor-glow"></div>
+
+<!-- CUSTOM CURSOR -->
+<div id="cursor-dot"></div>
+<div id="cursor-ring"></div>
+
+<!-- INSPECTOR BADGE -->
+<div id="inspector-badge">
+  <div class="badge-inner">✦ CERTIFIED INSPECTOR ✦</div>
+</div>
+
+<!-- KONAMI OVERLAY -->
+<div id="konami-overlay">
+  <div class="konami-text">
+    You have found the hidden entrance.<br/>
+    The Brick respects persistence.
+  </div>
+</div>
+
+<!-- GRAIN -->
+<div class="grain-overlay"></div>
+
+<!-- PROGRESS BAR -->
+<div id="progress-bar"></div>
+
+<!-- SOUND TOGGLE -->
+<button id="sound-toggle">♪ OFF</button>
+
+<!-- VIEWER NOTIFICATION -->
+<div class="viewer-notif" id="viewer-notif"><span class="dot"></span><span id="notif-text"></span></div>
+
+<!-- CONFETTI CONTAINER -->
+<div class="confetti-container" id="confetti-container"></div>
+
+<!-- ════════════════════════════════
+     PRELOADER
+════════════════════════════════ -->
+<div id="preloader">
+  <div class="spotlight"></div>
+  <canvas id="intro-canvas" width="720" height="440"></canvas>
+  <div class="intro-headline">T H E &nbsp; B R I C K</div>
+</div>
+
+<!-- ════════════════════════════════
+     HEADER
+════════════════════════════════ -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 md:px-16 h-20 bg-surface/90 backdrop-blur-md border-b border-secondary/10">
+  <span class="font-display text-xl tracking-[0.08em] text-secondary">THE BRICK</span>
+  <div class="hidden md:flex gap-8">
+    <a class="font-mono text-[11px] tracking-widest text-outline hover:text-secondary transition-colors" href="#specs">PROVENANCE</a>
+    <a class="font-mono text-[11px] tracking-widest text-outline hover:text-secondary transition-colors" href="#inspection">INSPECTION</a>
+    <a class="font-mono text-[11px] tracking-widest text-outline hover:text-secondary transition-colors" href="#acquire">ACQUIRE</a>
+  </div>
+  <button class="btn-ghost hidden md:block"><span>ACQUIRE</span></button>
+  <!-- Mobile hamburger -->
+  <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<!-- Mobile drawer -->
+<div class="mobile-backdrop" id="mobile-backdrop"></div>
+<nav class="mobile-drawer" id="mobile-drawer">
+  <a class="font-mono text-xs tracking-widest text-outline hover:text-secondary transition-colors uppercase" href="#specs" onclick="closeMobileMenu()">PROVENANCE</a>
+  <a class="font-mono text-xs tracking-widest text-outline hover:text-secondary transition-colors uppercase" href="#inspection" onclick="closeMobileMenu()">INSPECTION</a>
+  <a class="font-mono text-xs tracking-widest text-outline hover:text-secondary transition-colors uppercase" href="#acquire" onclick="closeMobileMenu()">ACQUIRE</a>
+  <div style="border-top:1px solid rgba(201,169,110,0.1);padding-top:1.5rem;margin-top:1rem;">
+    <button class="btn-ghost" style="width:100%" onclick="closeMobileMenu()"><span>ACQUIRE</span></button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ════════════════════════════════
+     HERO
+════════════════════════════════ -->
+<section id="hero" class="relative w-full h-screen flex flex-col md:flex-row px-6 md:px-16 pt-32 pb-12 overflow-hidden parallax-panel" style="background:#0D0C0B;">
+
+  <!-- Left -->
+  <div class="w-full md:w-1/2 flex flex-col justify-center py-16 md:py-0">
+    <span class="eyebrow mb-8">Est. Geological Record. Circa 4.2 Billion BC.</span>
+    <h1 class="font-display leading-[0.88] text-on-surface tracking-[0.3em] uppercase mb-8" style="font-size: clamp(5rem,11vw,10rem);">
+      THE<br/>BRICK.
+    </h1>
+    <div class="w-16 h-[1px] bg-secondary mb-8"></div>
+    <p class="font-body font-light text-xl text-on-surface/75 mb-10 leading-relaxed">
+      Handcrafted. Timeless. Yours.
+    </p>
+    <div class="flex flex-col items-start gap-4">
+      <button class="btn-ghost"><span>Acquire Yours — $4,200</span></button>
+      <span class="font-mono text-[10px] tracking-widest text-outline uppercase mt-2">One available. Worldwide.</span>
+    </div>
+  </div>
+
+  <!-- Right — Three.js canvas -->
+  <div class="w-full md:w-1/2 h-[380px] md:h-[620px] flex items-center justify-center relative mt-10 md:mt-0">
+    <div class="brick-artifact-frame w-full h-full bg-surface-warm flex items-center justify-center" id="hero-pedestal">
+      <canvas id="brick-3d" style="width:100%;height:100%;display:block;"></canvas>
+    </div>
+  </div>
+
+  <!-- Scroll hint -->
+  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+    <span class="font-mono text-[10px] text-secondary tracking-widest uppercase">↓ scroll</span>
+    <div class="w-[1px] h-10 bg-secondary/30 animate-pulse-scroll"></div>
+  </div>
+</section>
+
+<div class="bleed-down" aria-hidden="true"></div>
+
+<!-- ════════════════════════════════
+     ORIGIN — Clay. Water. Fire. Time.
+════════════════════════════════ -->
+<section id="origin" class="parallax-panel" style="background:#0D0C0B;">
+  <div class="origin-words">
+    <div class="origin-word">Clay.</div>
+    <div class="origin-word">Water.</div>
+    <div class="origin-word">Fire.</div>
+    <div class="origin-word">Time.</div>
+  </div>
+  <!-- Embers -->
+  <div id="ember-container" style="position:absolute;inset:0;overflow:hidden;pointer-events:none;"></div>
+</section>
+
+<div class="bleed-down"></div>
+
+<!-- ════════════════════════════════
+     SPECS
+════════════════════════════════ -->
+<section id="specs" class="bg-surface-warm py-32 md:py-40 px-6 md:px-16 relative parallax-panel">
+  <span class="absolute top-10 right-10 font-display leading-none text-surface select-none" style="font-size:15rem;opacity:0.04;">02</span>
+  <div class="max-w-4xl mx-auto">
+    <span class="eyebrow">The Form</span>
+    <h2 class="font-display text-4xl md:text-6xl text-on-surface mb-20 tracking-wide">Every Dimension.<br/>Considered.</h2>
+
+    <div class="flex flex-col md:flex-row gap-12 w-full">
+      <!-- Specs list -->
+      <div class="w-full md:w-1/2 space-y-0" id="spec-list">
+        <div class="spec-row flex flex-col md:flex-row border-b border-secondary/10 py-6 group">
+          <span class="w-full md:w-[40%] eyebrow mb-1 md:mb-0 group-hover:pl-2 transition-all duration-300">Dimensions</span>
+          <span class="w-full md:w-[60%] font-body font-light text-on-surface text-lg">215mm of uncompromising presence.</span>
+        </div>
+        <div class="spec-row flex flex-col md:flex-row border-b border-secondary/10 py-6 group">
+          <span class="w-full md:w-[40%] eyebrow mb-1 md:mb-0 group-hover:pl-2 transition-all duration-300">Mass</span>
+          <span class="w-full md:w-[60%] font-body font-light text-on-surface text-lg">2.5kg of pure geological authority.</span>
+        </div>
+        <div class="spec-row flex flex-col md:flex-row border-b border-secondary/10 py-6 group">
+          <span class="w-full md:w-[40%] eyebrow mb-1 md:mb-0 group-hover:pl-2 transition-all duration-300">Temperature</span>
+          <span class="w-full md:w-[60%] font-body font-light text-on-surface text-lg">1,050°C. Zero compromises.</span>
+        </div>
+        <div class="spec-row flex flex-col md:flex-row border-b border-secondary/10 py-6 group">
+          <span class="w-full md:w-[40%] eyebrow mb-1 md:mb-0 group-hover:pl-2 transition-all duration-300">Finish</span>
+          <span class="w-full md:w-[60%] font-body font-light text-on-surface text-lg">Natural. Imperfect. Correct.</span>
+        </div>
+        <div class="spec-row flex flex-col md:flex-row border-b border-secondary/10 py-6 group">
+          <span class="w-full md:w-[40%] eyebrow mb-1 md:mb-0 group-hover:pl-2 transition-all duration-300">Origin</span>
+          <span class="w-full md:w-[60%] font-body font-light text-on-surface text-lg">Made in a factory. Unlike anything else.</span>
+        </div>
+      </div>
+
+      <!-- 3D Brick Sticky Container -->
+      <div class="w-full md:w-1/2 flex flex-col items-center justify-start relative">
+        <div class="sticky top-1/2 -translate-y-1/2 w-[300px] h-[300px]" style="position:relative;">
+          <canvas id="spec-brick-3d" style="width:100%;height:100%;display:block;" class="cursor-grab"></canvas>
+          <span class="spec-face-label" id="spec-label-front" style="bottom:-28px;left:50%;transform:translateX(-50%);">Front Face — 215 × 65mm</span>
+          <span class="spec-face-label" id="spec-label-side" style="bottom:-28px;left:50%;transform:translateX(-50%);">Side — 102.5 × 65mm</span>
+          <span class="spec-face-label" id="spec-label-top" style="bottom:-28px;left:50%;transform:translateX(-50%);">Top — 215 × 102.5mm</span>
+          <span class="spec-face-label" id="spec-label-back" style="bottom:-28px;left:50%;transform:translateX(-50%);">Rear Face — Kiln Marked</span>
+          <span class="spec-face-label" id="spec-label-bottom" style="bottom:-28px;left:50%;transform:translateX(-50%);">Base — Origin Stamp</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="text-center font-serif-italic text-outline text-xl md:text-2xl border-t border-secondary/10 pt-20 mt-20">
+      "The only object in existence that improves every room it enters."
+    </p>
+  </div>
+</section>
+
+<div class="bleed-up"></div>
+
+<!-- ════════════════════════════════
+     TESTIMONIALS
+════════════════════════════════ -->
+<section id="testimonials" class="bg-surface py-32 md:py-40 px-6 md:px-16 parallax-panel">
+  <span class="eyebrow text-center block mb-4">Those Who Know</span>
+  <h2 class="font-display text-4xl md:text-5xl text-on-surface text-center mb-20 tracking-wide">The Collectors Speak.</h2>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+    <div class="testimonial-card bg-surface-warm p-10 border-l-2 border-secondary relative overflow-hidden">
+      <span class="absolute -top-6 -left-1 font-display text-[9rem] text-secondary select-none" style="opacity:0.08;">"</span>
+      <blockquote class="font-serif-italic text-xl text-on-surface leading-relaxed mb-8 relative z-10">
+        I replaced my Aston Martin with The Brick. I have not looked back.
+      </blockquote>
+      <cite class="block text-right font-mono text-outline text-[11px] tracking-widest uppercase">— Edmund V., Monaco</cite>
+    </div>
+
+    <div class="testimonial-card bg-surface-warm p-10 border-l-2 border-secondary relative overflow-hidden md:mt-16">
+      <span class="absolute -top-6 -left-1 font-display text-[9rem] text-secondary select-none" style="opacity:0.08;">"</span>
+      <blockquote class="font-serif-italic text-xl text-on-surface leading-relaxed mb-8 relative z-10">
+        My architect wanted glass and steel. I insisted on The Brick. We no longer speak, but my home is correct.
+      </blockquote>
+      <cite class="block text-right font-mono text-outline text-[11px] tracking-widest uppercase">— Isabelle M., Geneva</cite>
+    </div>
+
+    <div class="testimonial-card bg-surface-warm p-10 border-l-2 border-secondary relative overflow-hidden">
+      <span class="absolute -top-6 -left-1 font-display text-[9rem] text-secondary select-none" style="opacity:0.08;">"</span>
+      <blockquote class="font-serif-italic text-xl text-on-surface leading-relaxed mb-8 relative z-10">
+        I have held many things. None have held me back.
+      </blockquote>
+      <cite class="block text-right font-mono text-outline text-[11px] tracking-widest uppercase">— Nikolai P., St. Moritz</cite>
+    </div>
+  </div>
+</section>
+
+<div class="bleed-down"></div>
+
+<!-- ════════════════════════════════
+     MINI GAME — THE INSPECTION
+════════════════════════════════ -->
+<section id="inspection" class="bg-surface-warm py-32 md:py-40 px-6 md:px-16 parallax-panel">
+  <div class="max-w-2xl mx-auto text-center">
+    <span class="eyebrow">The Ritual</span>
+    <h2 class="font-display text-4xl md:text-5xl text-on-surface mb-6 tracking-wide">The Inspection.</h2>
+    <p class="font-body font-light text-on-surface/60 mb-12 text-lg leading-relaxed">
+      Before The Brick may be acquired, you must prove your eye for quality.<br/>
+      Find all 5 imperfections. You have 10 seconds.
+    </p>
+
+    <!-- HUD -->
+    <div class="flex justify-between items-center mb-4 max-w-[520px] mx-auto">
+      <span class="font-mono text-[11px] tracking-widest text-outline uppercase" id="found-count">0 / 5 Found</span>
+      <span class="font-mono text-2xl text-secondary" id="timer">–</span>
+    </div>
+
+    <!-- Brick Surface -->
+    <div id="game-brick-surface">
+      <!-- Texture lines -->
+      <div class="brick-texture-line" style="top:33%"></div>
+      <div class="brick-texture-line" style="top:66%"></div>
+      <!-- Imperfections injected by JS -->
+    </div>
+
+    <!-- Controls -->
+    <div class="mt-8 flex flex-col items-center gap-4">
+      <button class="btn-ghost" id="game-start"><span>Begin Inspection</span></button>
+      <div id="game-result" class="font-serif-italic text-on-surface text-xl mt-4 min-h-[2rem]" aria-live="polite"></div>
+      <button class="btn-secondary hidden" id="game-restart">Attempt Again</button>
+    </div>
+  </div>
+</section>
+
+<div class="bleed-up"></div>
+
+<!-- ════════════════════════════════
+     CERTIFICATE
+════════════════════════════════ -->
+<section id="certificate" class="py-32 md:py-40 px-6 md:px-16 flex items-center justify-center relative overflow-hidden bg-surface parallax-panel">
+  <div class="relative max-w-2xl w-full">
+    <div class="cert-card bg-parchment p-12 md:p-16 shadow-2xl relative" style="transform: rotate(-2deg);">
+      <!-- Paper texture -->
+      <div class="absolute inset-0 pointer-events-none" style="background-image:url('https://www.transparenttextures.com/patterns/cream-paper.png');opacity:0.45;"></div>
+      <!-- Inner border -->
+      <div class="absolute inset-3 pointer-events-none" style="border:1px solid rgba(139,115,85,0.25);"></div>
+
+      <div class="relative z-10 space-y-6">
+        <div class="flex justify-between items-start">
+          <span class="font-mono text-brick-red font-bold tracking-widest">BRICK-001-∞</span>
+          <div class="text-right">
+            <span class="block font-mono text-[10px] tracking-widest uppercase" style="color:#5D4514;">Authenticity Record</span>
+            <span class="block font-display text-xl" style="color:#221b09;">The Prime Specimen</span>
+            <span class="block font-mono text-[9px] tracking-widest uppercase mt-1" id="cert-status" style="color:#5D4514;">Awaiting Inspection</span>
+          </div>
+        </div>
+
+        <div class="h-[1px] w-full" style="background:rgba(93,69,20,0.2);"></div>
+
+        <p class="font-serif-italic text-lg leading-relaxed text-center py-6" style="color:#412d00;">
+          This document certifies that the bearer is the rightful owner of one (1) genuine Brick,
+          fired in accordance with traditions that predate written language.
+          It is unreplicable. It is final.
+        </p>
+
+        <div class="h-[1px] w-full" style="background:rgba(93,69,20,0.2);"></div>
+
+        <div class="flex justify-between items-end pt-4">
+          <div>
+            <span class="block font-mono text-[10px] uppercase tracking-widest mb-1" style="color:#5D4514;">Certified By</span>
+            <span class="font-mono text-[10px] tracking-widest" style="color:#5D4514;">The Bureau of Exceptional Objects — Geneva, est. 2024</span>
+          </div>
+          <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.6rem;color:#221b09;transform:rotate(-3deg);">
+            Reginald Mortar
+          </div>
+        </div>
+      </div>
+
+      <!-- Wax seal -->
+      <div class="wax-seal absolute -bottom-8 -right-8 w-24 h-24 rounded-full flex items-center justify-center border-4" style="border-color:#8B2E10;z-index:20;">
+        <span class="font-display text-3xl font-bold" style="color:rgba(255,255,255,0.8);">B</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════
+     SCARCITY
+════════════════════════════════ -->
+<section id="scarcity" class="px-6 text-center relative overflow-hidden parallax-panel" style="background:#B94F2A;">
+  <p class="font-display text-on-surface tracking-[0.05em] scarcity-pulse" style="font-size:clamp(2.5rem,8vw,7rem);line-height:1;">
+    Only 1 brick remains.
+  </p>
+  <p class="font-body font-light mt-6 text-lg" style="color:rgba(232,221,208,0.55);">
+    This number has not changed in 6 months.
+  </p>
+  <!-- Ambient glow pulses -->
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(255,255,255,0.08) 0%,transparent 60%);pointer-events:none;animation:heartbeat 2s ease-in-out infinite;"></div>
+</section>
+
+<!-- ════════════════════════════════
+     ACQUIRE / CTA
+════════════════════════════════ -->
+<section id="acquire" class="bg-surface px-6 text-center parallax-panel">
+  <span class="eyebrow">Investment</span>
+  <div class="font-display text-secondary mb-3" style="font-size:clamp(4rem,12vw,9rem);line-height:1;">
+    $<span id="price-counter">4,200</span>
+  </div>
+  <p class="font-serif-italic text-outline text-lg mb-12">Price increases while you read this.</p>
+  <button class="btn-solid">Own The Legend</button>
+  <p class="font-mono text-[10px] tracking-widest text-outline uppercase mt-6">Free shipping. Arrives wrapped in silence.</p>
+</section>
+
+</main>
+
+<!-- ════════════════════════════════
+     FOOTER
+════════════════════════════════ -->
+<footer class="py-16 px-6 md:px-16 flex flex-col items-center gap-4 text-center border-t border-secondary/10 bg-surface">
+  <span class="font-display text-xl tracking-widest text-secondary">THE BRICK</span>
+  <div class="flex gap-10 mt-4">
+    <a class="font-mono text-[10px] tracking-widest text-outline hover:text-secondary transition-colors uppercase" href="#specs">Archives</a>
+    <a class="font-mono text-[10px] tracking-widest text-outline hover:text-secondary transition-colors uppercase" href="#acquire">Acquisition</a>
+    <a class="font-mono text-[10px] tracking-widest text-outline hover:text-secondary transition-colors uppercase" href="#certificate">Provenance</a>
+  </div>
+  <p class="font-mono text-[10px] tracking-widest text-outline mt-6">© The Brick. All rights reserved.</p>
+  <p class="font-serif-italic text-outline text-sm mt-1">No refunds. No regrets.</p>
+  <p class="font-mono text-[10px] text-outline/40 mt-1">BRICK-001-∞</p>
+</footer>
+
+<!-- ════════════════════════════════
+     SCRIPTS
+════════════════════════════════ -->
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+// ── UTILS ──────────────────────────────────────────────
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+let soundEnabled = false;
+let ambientOsc = null;
+let ambientGain = null;
+
+function playTone(freq, duration, type = 'sine', vol = 0.25) {
+  if (!soundEnabled || !audioCtx) return;
+  const osc  = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+  osc.start();
+  osc.stop(audioCtx.currentTime + duration);
+}
+
+function playClick()   { playTone(900, 0.08, 'sine', 0.2); }
+function playSuccess() {
+  [523, 659, 784].forEach((f, i) => setTimeout(() => playTone(f, 0.35, 'sine', 0.18), i * 140));
+}
+function playFail()    { playTone(180, 0.4, 'sawtooth', 0.15); }
+function playTick()    { playTone(440, 0.06, 'square', 0.08); }
+
+// ── SOUND TOGGLE ───────────────────────────────────────
+let ambientOscillators = [];
+document.getElementById('sound-toggle').addEventListener('click', function () {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  soundEnabled = !soundEnabled;
+  this.textContent = soundEnabled ? '♪ ON' : '♪ OFF';
+
+  if (soundEnabled) {
+    // Create rich ambient drone: fundamental + octave + perfect fifth
+    const masterGain = audioCtx.createGain();
+    masterGain.gain.value = 0;
+    masterGain.connect(audioCtx.destination);
+    ambientGain = masterGain;
+
+    const harmonics = [
+      { freq: 55,  type: 'sine',     vol: 0.06 },  // Fundamental A1
+      { freq: 110, type: 'sine',     vol: 0.03 },  // Octave A2
+      { freq: 82.41, type: 'sine',   vol: 0.02 },  // Perfect fifth E2
+      { freq: 55,  type: 'triangle', vol: 0.015 },  // Warmth layer
+    ];
+
+    harmonics.forEach(h => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = h.type;
+      osc.frequency.value = h.freq;
+      // Slight detuning for richness
+      osc.detune.value = (Math.random() - 0.5) * 6;
+      gain.gain.value = h.vol;
+      osc.connect(gain);
+      gain.connect(masterGain);
+      osc.start();
+      ambientOscillators.push(osc);
+    });
+
+    masterGain.gain.setTargetAtTime(1, audioCtx.currentTime, 3);
+  } else {
+    if (ambientGain) {
+      ambientGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5);
+      setTimeout(() => {
+        ambientOscillators.forEach(o => { try { o.stop(); } catch(e) {} });
+        ambientOscillators = [];
+      }, 800);
+    }
+  }
+});
+
+function playDeepThud() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.value = 45;
+  gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.8);
+  // Impact click
+  const click = audioCtx.createOscillator();
+  const cg = audioCtx.createGain();
+  click.type = 'square';
+  click.frequency.value = 120;
+  cg.gain.setValueAtTime(0.15, audioCtx.currentTime);
+  cg.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+  click.connect(cg);
+  cg.connect(audioCtx.destination);
+  click.start();
+  click.stop(audioCtx.currentTime + 0.05);
+}
+
+// ── SCROLL PROGRESS & AUDIO MODULATION ─────────────────
+let lastScrollY = window.scrollY;
+window.addEventListener('scroll', () => {
+  const pct = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  
+  if (soundEnabled && ambientGain && audioCtx) {
+    const velocity = Math.abs(window.scrollY - lastScrollY);
+    const targetGain = Math.min(1 + (velocity * 0.05), 4.0); // Boost volume when scrolling fast
+    ambientGain.gain.setTargetAtTime(targetGain, audioCtx.currentTime, 0.1);
+    ambientGain.gain.setTargetAtTime(1, audioCtx.currentTime + 0.1, 0.5);
+  }
+  lastScrollY = window.scrollY;
+}, { passive: true });
+
+// ── CURSOR SYSTEM (GLOW + DOT + RING) ──────────────────
+(function initCursorSystem() {
+  const glow = document.getElementById('cursor-glow');
+  const dot  = document.getElementById('cursor-dot');
+  const ring = document.getElementById('cursor-ring');
+  if (!glow || window.matchMedia('(pointer: coarse)').matches) return;
+
+  let mx = -300, my = -300;
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX;
+    my = e.clientY;
+  }, { passive: true });
+
+  let cx = -300, cy = -300;   // glow (smooth follow)
+  let dx = -300, dy = -300;   // dot (faster follow)
+  let rx = -300, ry = -300;   // ring (medium follow)
+  let currentState = '';
+  
+  // Magnetic pull variables
+  let isMagnetic = false;
+  let magX = 0;
+  let magY = 0;
+  let currentMagEl = null;
+
+  function animate() {
+    // Glow — slow follow
+    cx += (mx - cx) * 0.12;
+    cy += (my - cy) * 0.12;
+    glow.style.left = cx + 'px';
+    glow.style.top  = cy + 'px';
+
+    // Dot — snappy follow
+    dx += (mx - dx) * 0.35;
+    dy += (my - dy) * 0.35;
+    dot.style.left = dx + 'px';
+    dot.style.top  = dy + 'px';
+
+    // Ring — medium follow (trails behind dot)
+    rx += (mx - rx) * 0.18;
+    ry += (my - ry) * 0.18;
+    
+    if (isMagnetic && currentMagEl) {
+      const rect = currentMagEl.getBoundingClientRect();
+      const h = rect.width / 2;
+      const vx = mx - rect.left - h;
+      const vy = my - rect.top - (rect.height / 2);
+      
+      magX += ((rect.left + h + vx * 0.1) - magX) * 0.35;
+      magY += ((rect.top + rect.height / 2 + vy * 0.1) - magY) * 0.35;
+      
+      dot.style.left = magX + 'px';
+      dot.style.top  = magY + 'px';
+      
+      rx += ((rect.left + h + vx * 0.05) - rx) * 0.18;
+      ry += ((rect.top + rect.height / 2 + vy * 0.05) - ry) * 0.18;
+      
+      currentMagEl.style.transform = `translate(${vx * 0.3}px, ${vy * 0.3}px)`;
+    } else {
+      magX = dx;
+      magY = dy;
+      dot.style.left = dx + 'px';
+      dot.style.top  = dy + 'px';
+    }
+    
+    ring.style.left = rx + 'px';
+    ring.style.top  = ry + 'px';
+
+    // Hover detection for cursor states
+    const hovered = document.elementFromPoint(mx, my);
+    let state = '';
+    
+    if (isMagnetic && currentMagEl && (!hovered || !hovered.closest('button, a'))) {
+        isMagnetic = false;
+        currentMagEl.style.transform = '';
+        currentMagEl = null;
+    }
+    
+    if (hovered) {
+      const magTarget = hovered.closest('button, a');
+      if (magTarget) {
+        state = 'pointer';
+        isMagnetic = true;
+        currentMagEl = magTarget;
+      } else if (hovered.closest('#game-brick-surface, .imperfection')) {
+        state = 'crosshair';
+      } else if (hovered.closest('canvas')) {
+        state = 'grab';
+      }
+    }
+
+    if (state !== currentState) {
+      currentState = state;
+      // Update glow
+      glow.className = state;
+      // Update dot + ring
+      dot.className = state ? 'state-' + state : '';
+      ring.className = state ? 'state-' + state : '';
+    }
+
+    requestAnimationFrame(animate);
+  }
+  animate();
+
+  // Hide during preloader
+  [glow, dot, ring].forEach(el => el.style.opacity = '0');
+  const obs = new MutationObserver(() => {
+    const pre = document.getElementById('preloader');
+    if (pre && pre.style.display === 'none') {
+      [glow, dot, ring].forEach(el => el.style.opacity = '1');
+      obs.disconnect();
+    }
+  });
+  obs.observe(document.getElementById('preloader'), { attributes: true, attributeFilter: ['style'] });
+})();
+
+// ── MOBILE MENU ────────────────────────────────────────
+function closeMobileMenu() {
+  document.getElementById('hamburger').classList.remove('open');
+  document.getElementById('mobile-drawer').classList.remove('open');
+  document.getElementById('mobile-backdrop').classList.remove('open');
+}
+
+(function initMobileMenu() {
+  const burger   = document.getElementById('hamburger');
+  const drawer   = document.getElementById('mobile-drawer');
+  const backdrop = document.getElementById('mobile-backdrop');
+  if (!burger) return;
+
+  burger.addEventListener('click', () => {
+    const isOpen = drawer.classList.contains('open');
+    burger.classList.toggle('open', !isOpen);
+    drawer.classList.toggle('open', !isOpen);
+    backdrop.classList.toggle('open', !isOpen);
+  });
+
+  backdrop.addEventListener('click', closeMobileMenu);
+})();
+
+// ── THREE.JS HELPER ────────────────────────────────────
+// Preload textures once, share across all brick instances
+const _textureLoader = new THREE.TextureLoader();
+const _brickTextures = {
+  diffuse: null,
+  normal: null,
+  roughness: null,
+  loaded: false,
+  _promise: null,
+};
+
+function loadBrickTextures() {
+  if (_brickTextures._promise) return _brickTextures._promise;
+  _brickTextures._promise = new Promise(resolve => {
+    _textureLoader.load('/textures/clay.png', t => {
+      _brickTextures.diffuse = t;
+      resolve();
+    });
+  }).then(() => {
+    const t = _brickTextures.diffuse;
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.anisotropy = 4;
+    
+    // We only have one texture, so we'll reuse it for bump and roughness
+    _brickTextures.normal = t;
+    _brickTextures.roughness = t;
+    
+    _brickTextures.loaded = true;
+  });
+  return _brickTextures._promise;
+}
+
+// Create chamfered brick geometry with 3 holes (cores)
+function createBrickGeometry(w, h, d, bevel) {
+  const shape = new THREE.Shape();
+  
+  // Create outer boundary with rounded corners (chamfer)
+  const x = -w / 2;
+  const y = -d / 2;
+  
+  shape.moveTo(x, y + bevel);
+  shape.lineTo(x, y + d - bevel);
+  shape.quadraticCurveTo(x, y + d, x + bevel, y + d);
+  shape.lineTo(x + w - bevel, y + d);
+  shape.quadraticCurveTo(x + w, y + d, x + w, y + d - bevel);
+  shape.lineTo(x + w, y + bevel);
+  shape.quadraticCurveTo(x + w, y, x + w - bevel, y);
+  shape.lineTo(x + bevel, y);
+  shape.quadraticCurveTo(x, y, x, y + bevel);
+
+  // Add 3 holes (cores)
+  const holeRadius = 0.18; 
+  const holeSpacing = 0.55; 
+
+  // Holes must be drawn in opposite winding order to the shape
+  const hole1 = new THREE.Path();
+  hole1.absarc(-holeSpacing, 0, holeRadius, 0, Math.PI * 2, false);
+  shape.holes.push(hole1);
+
+  const hole2 = new THREE.Path();
+  hole2.absarc(0, 0, holeRadius, 0, Math.PI * 2, false);
+  shape.holes.push(hole2);
+
+  const hole3 = new THREE.Path();
+  hole3.absarc(holeSpacing, 0, holeRadius, 0, Math.PI * 2, false);
+  shape.holes.push(hole3);
+
+  const extrudeSettings = {
+    depth: h - (bevel * 2),
+    bevelEnabled: true,
+    bevelSegments: 2,
+    steps: 1,
+    bevelSize: bevel,
+    bevelThickness: bevel
+  };
+
+  const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+  
+  // ExtrudeGeometry extrudes along positive Z. Center it along Z.
+  geo.translate(0, 0, -(h - (bevel * 2)) / 2);
+  
+  // Rotate so the holes go top-to-bottom (along Y axis)
+  geo.rotateX(Math.PI / 2);
+
+  geo.computeVertexNormals();
+
+  // Cubic UV Mapping to ensure textures apply nicely on the complex geometry
+  geo.computeBoundingBox();
+  const bbox = geo.boundingBox;
+  const size = new THREE.Vector3();
+  bbox.getSize(size);
+
+  const posAttr = geo.attributes.position;
+  const normAttr = geo.attributes.normal;
+  const uvAttr = geo.attributes.uv;
+
+  for (let i = 0; i < posAttr.count; i++) {
+    const px = posAttr.getX(i);
+    const py = posAttr.getY(i);
+    const pz = posAttr.getZ(i);
+    const nx = Math.abs(normAttr.getX(i));
+    const ny = Math.abs(normAttr.getY(i));
+    const nz = Math.abs(normAttr.getZ(i));
+
+    // Simple tri-planar projection logic
+    if (ny >= nx && ny >= nz) {
+      uvAttr.setXY(i, px / size.x + 0.5, pz / size.z + 0.5);
+    } else if (nz >= nx && nz >= ny) {
+      uvAttr.setXY(i, px / size.x + 0.5, py / size.y + 0.5);
+    } else {
+      uvAttr.setXY(i, pz / size.z + 0.5, py / size.y + 0.5);
+    }
+  }
+  
+  uvAttr.needsUpdate = true;
+
+  return geo;
+}
+
+function makeBrickScene(canvas) {
+  const w = canvas.clientWidth  || canvas.width;
+  const h = canvas.clientHeight || canvas.height;
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(w, h);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+
+  const scene = new THREE.Scene();
+
+  const camera = new THREE.PerspectiveCamera(38, w / h, 0.1, 100);
+  camera.position.set(0, 0.6, 5.5);
+
+  // Chamfered brick geometry (real proportions scaled, slight bevel on edges)
+  const geo = createBrickGeometry(2.15, 0.65, 1.025, 0.03);
+
+  // Create PBR material — start with flat color, textures applied when loaded
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0xB94F2A,
+    roughness: 0.85,
+    metalness: 0.02,
+  });
+
+  // Apply textures once loaded
+  loadBrickTextures().then(() => {
+    const diffuse = _brickTextures.diffuse.clone();
+    diffuse.needsUpdate = true;
+
+    // Use repeat to adjust scale so the clay pores are proportional
+    diffuse.repeat.set(2, 2);
+
+    mat.map = diffuse;
+    
+    // Use bump map instead of normal map since we have a single grayscale-friendly texture
+    mat.bumpMap = diffuse;
+    mat.bumpScale = 0.02;
+    
+    mat.roughnessMap = diffuse;
+    mat.roughness = 0.95;
+    mat.metalness = 0.02;
+    
+    // Slightly lighter base color to let texture shine
+    mat.color.set(0xDD8855); 
+    mat.needsUpdate = true;
+  });
+
+  const brick = new THREE.Mesh(geo, mat);
+  brick.castShadow = true;
+  brick.receiveShadow = true;
+  scene.add(brick);
+
+  // ── LIGHTING (gallery/studio setup) ──
+
+  // Soft ambient — warm base
+  scene.add(new THREE.AmbientLight(0xfff5e0, 0.35));
+
+  // Hemisphere light — subtle sky/ground color difference
+  const hemi = new THREE.HemisphereLight(0xffeedd, 0x443322, 0.4);
+  scene.add(hemi);
+
+  // Key spotlight — top right, dramatic warm
+  const key = new THREE.SpotLight(0xffeedd, 5.0);
+  key.position.set(4, 6, 4);
+  key.angle = 0.38;
+  key.penumbra = 0.65;
+  key.decay = 1.5;
+  key.castShadow = true;
+  key.shadow.mapSize.width = 1024;
+  key.shadow.mapSize.height = 1024;
+  key.shadow.bias = -0.001;
+  scene.add(key);
+
+  // Rim light — cold blue from behind for edge definition
+  const rim = new THREE.DirectionalLight(0x99bbee, 0.8);
+  rim.position.set(-4, 2, -4);
+  scene.add(rim);
+
+  // Fill — warm gold glow from below
+  const fill = new THREE.PointLight(0xC9A96E, 0.7, 14);
+  fill.position.set(-2, -2, 3);
+  scene.add(fill);
+
+  // Accent — subtle top-down specular highlight
+  const accent = new THREE.DirectionalLight(0xffffff, 0.3);
+  accent.position.set(0, 8, 0);
+  scene.add(accent);
+
+  return { renderer, scene, camera, brick };
+}
+
+// ── INTRO / PRELOADER ──────────────────────────────────
+(function initIntro() {
+  document.body.style.overflow = 'hidden';
+
+  const canvas = document.getElementById('intro-canvas');
+  const { renderer, scene, camera, brick } = makeBrickScene(canvas);
+
+  let raf;
+  function renderLoop() {
+    raf = requestAnimationFrame(renderLoop);
+    renderer.render(scene, camera);
+  }
+  renderLoop();
+
+  // Split headline chars
+  const hl = document.querySelector('.intro-headline');
+  hl.innerHTML = hl.textContent.split('').map(c =>
+    `<span class="char">${c === ' ' ? '&nbsp;' : c}</span>`
+  ).join('');
+
+  // Animate
+  const tl = gsap.timeline({
+    onComplete: () => {
+      cancelAnimationFrame(raf);
+      gsap.to('#preloader', {
+        opacity: 0, duration: 1.2, ease: 'power2.inOut',
+        onComplete: () => {
+          if (typeof playDeepThud === 'function' && soundEnabled) playDeepThud();
+          document.getElementById('preloader').style.display = 'none';
+          document.body.style.overflow = '';
+          initHeroBrick();
+          initScrollAnimations();
+        }
+      });
+    }
+  });
+
+  tl.to('.spotlight', { opacity: 1, duration: 1.4, ease: 'power2.out' })
+    .to(brick.rotation, { y: Math.PI * 2, duration: 2.6, ease: 'power1.inOut' }, '-=0.6')
+    .to('.intro-headline', { opacity: 1, duration: 0.1 }, '-=1.4')
+    .to('.intro-headline .char', {
+      opacity: 1, y: 0, stagger: 0.06, duration: 0.35, ease: 'power2.out'
+    }, '-=1.3');
+})();
+
+// ── HERO BRICK ─────────────────────────────────────────
+function initHeroBrick() {
+  const canvas = document.getElementById('brick-3d');
+  const pedestal = document.getElementById('hero-pedestal');
+
+  // Size canvas to container
+  function resize() {
+    canvas.width  = pedestal.clientWidth;
+    canvas.height = pedestal.clientHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const { renderer, scene, camera, brick } = makeBrickScene(canvas);
+
+  window.addEventListener('triggerKilnMode', () => {
+    scene.children.forEach(c => {
+      if (c.isLight) {
+        gsap.to(c, { intensity: c.intensity * 0.05, duration: 2.0 });
+      }
+    });
+    const mat = brick.material;
+    mat.emissive = new THREE.Color(0xFF3300);
+    mat.emissiveIntensity = 0;
+    gsap.to(mat, { emissiveIntensity: 2.5, duration: 2.5, ease: 'power2.inOut' });
+    gsap.to(mat.color, { r: 1.0, g: 0.1, b: 0.0, duration: 2.5 });
+  });
+
+  let targetX = 0, targetY = 0, curX = 0, curY = 0, idle = 0;
+
+  pedestal.addEventListener('mousemove', e => {
+    targetY = ((e.clientX / window.innerWidth)  - 0.5) * 0.7;
+    targetX = ((e.clientY / window.innerHeight) - 0.5) * -0.4;
+  });
+
+  // Tilt on pedestal hover
+  pedestal.addEventListener('mousemove', e => {
+    const r = pedestal.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width  - 0.5;
+    const y = (e.clientY - r.top)  / r.height - 0.5;
+    pedestal.style.transform = `perspective(1200px) rotateY(${x * 8}deg) rotateX(${-y * 6}deg)`;
+  });
+  pedestal.addEventListener('mouseleave', () => {
+    pedestal.style.transform = '';
+  });
+
+  // IntersectionObserver — only render when visible
+  let visible = true;
+  new IntersectionObserver(([e]) => { visible = e.isIntersecting; }, { threshold: 0.1 })
+    .observe(pedestal);
+
+  function loop() {
+    requestAnimationFrame(loop);
+    if (!visible) return;
+    idle += 0.004;
+    curX += (targetX - curX) * 0.05;
+    curY += (targetY - curY) * 0.05;
+    brick.rotation.x = curX;
+    brick.rotation.y = curY + idle;
+
+    // Resize if needed
+    const w = pedestal.clientWidth, h = pedestal.clientHeight;
+    if (w > 0 && h > 0 && (renderer.domElement.width !== w || renderer.domElement.height !== h)) {
+      renderer.setSize(w, h);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    renderer.render(scene, camera);
+  }
+  loop();
+}
+
+// ── SPEC BRICK WITH FACE LABELS ────────────────────────
+function initSpecBrick() {
+  const canvas = document.getElementById('spec-brick-3d');
+  if (!canvas) return;
+  const { renderer, scene, camera, brick } = makeBrickScene(canvas);
+  brick.rotation.x = 0.3;
+
+  // Face labels keyed by rotation progress zones
+  const labels = {
+    front:  document.getElementById('spec-label-front'),
+    side:   document.getElementById('spec-label-side'),
+    top:    document.getElementById('spec-label-top'),
+    back:   document.getElementById('spec-label-back'),
+    bottom: document.getElementById('spec-label-bottom'),
+  };
+
+  function setActiveLabel(name) {
+    Object.entries(labels).forEach(([key, el]) => {
+      if (!el) return;
+      if (key === name) el.classList.add('active');
+      else el.classList.remove('active');
+    });
+  }
+
+  ScrollTrigger.create({
+    trigger: '#specs',
+    start: 'top center',
+    end: 'bottom center',
+    scrub: 0.5,
+    onUpdate: (self) => {
+      const p = self.progress;
+      // Full Y rotation + slight X tilt variation
+      brick.rotation.y = p * Math.PI * 2;
+      brick.rotation.x = 0.3 + Math.sin(p * Math.PI * 2) * 0.25;
+
+      // Show face labels based on which face is visible
+      if (p < 0.15)      setActiveLabel('front');
+      else if (p < 0.35) setActiveLabel('side');
+      else if (p < 0.55) setActiveLabel('top');
+      else if (p < 0.75) setActiveLabel('back');
+      else if (p < 0.9)  setActiveLabel('bottom');
+      else               setActiveLabel('front');
+    }
+  });
+
+  function loop() {
+    requestAnimationFrame(loop);
+    renderer.render(scene, camera);
+  }
+  loop();
+
+  // Highlight spec rows as brick rotates past them
+  const specRows = document.querySelectorAll('.spec-row');
+  specRows.forEach((row, i) => {
+    ScrollTrigger.create({
+      trigger: row,
+      start: 'top 80%',
+      end: 'bottom 20%',
+      onEnter: () => row.style.borderLeftColor = '#C9A96E',
+      onLeave: () => row.style.borderLeftColor = '',
+      onEnterBack: () => row.style.borderLeftColor = '#C9A96E',
+      onLeaveBack: () => row.style.borderLeftColor = '',
+    });
+  });
+
+  // Initial render
+  setActiveLabel('front');
+  renderer.render(scene, camera);
+}
+
+// ── SCROLL ANIMATIONS ──────────────────────────────────
+function initScrollAnimations() {
+
+  // Origin words — staggered on scroll with scale-up parallax
+  gsap.utils.toArray('.origin-word').forEach((word, i) => {
+    gsap.fromTo(word,
+      { opacity: 0, y: 40, scale: 0.85 },
+      {
+        opacity: 1, y: 0, scale: 1, duration: 0.9, ease: 'power2.out',
+        scrollTrigger: {
+          trigger: word,
+          start: 'top 80%',
+          toggleActions: 'play none none reverse',
+        },
+        delay: i * 0.08,
+      }
+    );
+  });
+
+  // Origin embers — rising particles during scroll
+  (function initEmbers() {
+    const container = document.getElementById('ember-container');
+    if (!container) return;
+    let emitting = false;
+    let emberInterval;
+
+    ScrollTrigger.create({
+      trigger: '#origin',
+      start: 'top 60%',
+      end: 'bottom 20%',
+      onEnter: () => { emitting = true; spawnEmbers(); },
+      onLeave: () => { emitting = false; clearInterval(emberInterval); },
+      onEnterBack: () => { emitting = true; spawnEmbers(); },
+      onLeaveBack: () => { emitting = false; clearInterval(emberInterval); },
+    });
+
+    function spawnEmbers() {
+      if (emberInterval) clearInterval(emberInterval);
+      emberInterval = setInterval(() => {
+        if (!emitting) return;
+        const e = document.createElement('div');
+        e.className = 'ember';
+        e.style.left = (10 + Math.random() * 80) + '%';
+        e.style.bottom = '0';
+        const dur = 2 + Math.random() * 2;
+        e.style.animation = `ember-rise ${dur}s ease-out forwards`;
+        container.appendChild(e);
+        setTimeout(() => e.remove(), dur * 1000);
+      }, 200);
+    }
+  })();
+
+  // Spec rows
+  gsap.utils.toArray('.spec-row').forEach((row, i) => {
+    gsap.to(row, {
+      opacity: 1, x: 0, duration: 0.6, ease: 'power2.out',
+      scrollTrigger: {
+        trigger: row,
+        start: 'top 85%',
+        toggleActions: 'play none none reverse',
+      },
+      delay: i * 0.07,
+    });
+  });
+
+  // Testimonials
+  gsap.utils.toArray('.testimonial-card').forEach((card, i) => {
+    gsap.to(card, {
+      opacity: 1, y: 0, duration: 0.8, ease: 'power2.out',
+      scrollTrigger: {
+        trigger: card,
+        start: 'top 85%',
+        toggleActions: 'play none none reverse',
+      },
+      delay: i * 0.12,
+    });
+  });
+
+  // Certificate
+  gsap.to('.cert-card', {
+    opacity: 1,
+    rotate: -2,
+    y: 0,
+    duration: 1.2,
+    ease: 'power3.out',
+    scrollTrigger: {
+      trigger: '#certificate',
+      start: 'top 70%',
+    }
+  });
+
+  // Price counter
+  ScrollTrigger.create({
+    trigger: '#acquire',
+    start: 'top center',
+    once: true,
+    onEnter: () => {
+      const el = document.getElementById('price-counter');
+      let price = 4200;
+      setInterval(() => {
+        price += Math.floor(Math.random() * 3) + 1;
+        el.textContent = price.toLocaleString();
+      }, 1800);
+    }
+  });
+}
+
+// ── MINI GAME ──────────────────────────────────────────
+(function initGame() {
+  const SPOTS = 5, TIME = 10;
+  let found = 0, timeLeft = TIME, timer = null, active = false;
+
+  const surface  = document.getElementById('game-brick-surface');
+  const countEl  = document.getElementById('found-count');
+  const timerEl  = document.getElementById('timer');
+  const resultEl = document.getElementById('game-result');
+  const startBtn = document.getElementById('game-start');
+  const restartBtn = document.getElementById('game-restart');
+
+  function placeSpots() {
+    document.querySelectorAll('.imperfection').forEach(s => s.remove());
+    for (let i = 0; i < SPOTS; i++) {
+      const spot = document.createElement('div');
+      spot.className = 'imperfection';
+      spot.dataset.id = i;
+      spot.style.left = (8 + Math.random() * 82) + '%';
+      spot.style.top  = (8 + Math.random() * 80) + '%';
+      spot.addEventListener('click', onSpotClick);
+      surface.appendChild(spot);
+    }
+  }
+
+  function onSpotClick(e) {
+    if (!active) return;
+    const s = e.currentTarget;
+    if (s.classList.contains('found')) return;
+    s.classList.add('found');
+    found++;
+    countEl.textContent = found + ' / ' + SPOTS + ' Found';
+    playClick();
+    if (found === SPOTS) endGame(true);
+  }
+
+  function startGame() {
+    found = 0; timeLeft = TIME; active = true;
+    countEl.textContent = '0 / ' + SPOTS + ' Found';
+    timerEl.textContent = TIME;
+    timerEl.classList.remove('timer-urgent');
+    resultEl.textContent = '';
+    restartBtn.classList.add('hidden');
+    startBtn.classList.add('hidden');
+    placeSpots();
+
+    timer = setInterval(() => {
+      timeLeft--;
+      timerEl.textContent = timeLeft;
+      playTick();
+      if (timeLeft <= 3) timerEl.classList.add('timer-urgent');
+      if (timeLeft <= 0) endGame(false);
+    }, 1000);
+  }
+
+  function endGame(won) {
+    active = false;
+    clearInterval(timer);
+    timerEl.classList.remove('timer-urgent');
+
+    let msg;
+    if (won) {
+      msg = 'Your eye for quality is rare. The Brick accepts you.';
+      playSuccess();
+      launchConfetti();
+      document.getElementById('inspector-badge')?.classList.add('show');
+      const certStatus = document.getElementById('cert-status');
+      if (certStatus) {
+        certStatus.textContent = 'Inspected and Approved';
+        certStatus.style.color = '#C9A96E';
+      }
+    } else if (found >= 4) {
+      msg = 'Promising. The Brick will consider your application.';
+      playFail();
+    } else if (found >= 2) {
+      msg = 'You found something. The Brick found you wanting.';
+      playFail();
+    } else {
+      msg = 'Time, like The Brick, waits for no one.';
+      playFail();
+    }
+
+    resultEl.textContent = msg;
+    restartBtn.classList.remove('hidden');
+  }
+
+  startBtn.addEventListener('click', startGame);
+  restartBtn.addEventListener('click', startGame);
+})();
+
+// ── CONFETTI ───────────────────────────────────────────
+function launchConfetti() {
+  const container = document.getElementById('confetti-container');
+  const colors = ['#C9A96E', '#B94F2A', '#E8DDD0', '#D4A574', '#8B6914'];
+  for (let i = 0; i < 60; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + '%';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+    piece.style.animationDelay = (Math.random() * 0.8) + 's';
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    piece.style.width = (4 + Math.random() * 8) + 'px';
+    piece.style.height = (4 + Math.random() * 8) + 'px';
+    container.appendChild(piece);
+    setTimeout(() => piece.remove(), 4000);
+  }
+}
+
+// ── VIEWER NOTIFICATIONS ───────────────────────────────
+(function initViewerNotifs() {
+  const notif = document.getElementById('viewer-notif');
+  const textEl = document.getElementById('notif-text');
+  if (!notif || !textEl) return;
+
+  const messages = [
+    'Someone in Tokyo is viewing The Brick.',
+    'A collector in Zurich added this to their wishlist.',
+    'The Brick was shared 3 times in the last hour.',
+    'An inquiry was just received from Monaco.',
+    'A bidder from Dubai is considering acquisition.',
+    'The price was $3,800 last week.',
+  ];
+
+  let msgIndex = 0;
+  function showNotif() {
+    textEl.textContent = messages[msgIndex % messages.length];
+    notif.classList.add('show');
+    setTimeout(() => {
+      notif.classList.remove('show');
+      msgIndex++;
+    }, 4000);
+  }
+
+  // First notification after 15 seconds, then every 25-40 seconds
+  setTimeout(() => {
+    showNotif();
+    setInterval(showNotif, 25000 + Math.random() * 15000);
+  }, 15000);
+})();
+
+// ── EASTER EGG (WAX SEAL — TRIPLE CLICK) ──────────────
+(function initWaxSealEgg() {
+  const seal = document.querySelector('.wax-seal');
+  if (!seal) return;
+  let clicks = 0;
+  let sealTimer;
+  seal.style.cursor = 'none';
+  seal.addEventListener('click', () => {
+    clicks++;
+    clearTimeout(sealTimer);
+    if (clicks >= 3) {
+      clicks = 0;
+      playDeepThud();
+      // Gold flash
+      seal.style.boxShadow = '0 0 60px #C9A96E, 0 0 120px rgba(201,169,110,0.3)';
+      gsap.to(seal, {
+        rotation: '+=720',
+        duration: 1.5,
+        ease: 'power3.out',
+        onComplete: () => {
+          gsap.to(seal, { boxShadow: '2px 4px 12px rgba(0,0,0,0.5), inset -2px -2px 4px rgba(0,0,0,0.3)', duration: 0.8 });
+        }
+      });
+      const textEl = document.getElementById('notif-text');
+      const notif = document.getElementById('viewer-notif');
+      if (textEl && notif) {
+        textEl.textContent = '✦ You have found the hidden entrance. The Brick respects persistence. ✦';
+        notif.classList.add('show');
+        setTimeout(() => notif.classList.remove('show'), 7000);
+      }
+    } else {
+      sealTimer = setTimeout(() => clicks = 0, 500);
+    }
+  });
+})();
+
+// ── EASTER EGG (KONAMI CODE) ──────────────────────────
+(function initKonamiCode() {
+  const sequence = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+  let pos = 0;
+  const overlay = document.getElementById('konami-overlay');
+  if (!overlay) return;
+
+  document.addEventListener('keydown', (e) => {
+    const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    if (key === sequence[pos]) {
+      pos++;
+      if (pos === sequence.length) {
+        pos = 0;
+        // Trigger!
+        playDeepThud();
+        overlay.classList.add('show');
+        // Gold particle burst
+        for (let i = 0; i < 30; i++) {
+          const spark = document.createElement('div');
+          spark.style.cssText = `
+            position:fixed;width:4px;height:4px;border-radius:50%;background:#C9A96E;
+            left:50%;top:50%;z-index:9501;pointer-events:none;
+          `;
+          document.body.appendChild(spark);
+          const angle = (Math.PI * 2 / 30) * i;
+          const dist = 100 + Math.random() * 200;
+          gsap.to(spark, {
+            x: Math.cos(angle) * dist,
+            y: Math.sin(angle) * dist,
+            opacity: 0,
+            duration: 1.2 + Math.random() * 0.5,
+            ease: 'power2.out',
+            onComplete: () => spark.remove()
+          });
+        }
+        // Dismiss on click
+        overlay.addEventListener('click', () => {
+          overlay.classList.remove('show');
+        }, { once: true });
+        // Auto-dismiss after 8s
+        setTimeout(() => overlay.classList.remove('show'), 8000);
+      }
+    } else {
+      pos = key === sequence[0] ? 1 : 0;
+    }
+  });
+})();
+
+// ── PARALLAX SHADOW DETECTION ─────────────────────────
+(function initParallaxShadows() {
+  const panels = document.querySelectorAll('.parallax-panel');
+  if (panels.length < 2) return;
+
+  // Use IntersectionObserver to detect when panels begin overlapping
+  // When a panel enters the viewport and the previous is still sticky,
+  // add a shadow gradient to the entering panel
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && entry.intersectionRatio < 0.95) {
+        entry.target.classList.add('is-overlapping');
+      } else {
+        entry.target.classList.remove('is-overlapping');
+      }
+    });
+  }, { threshold: [0, 0.3, 0.6, 0.95, 1] });
+
+  panels.forEach(p => observer.observe(p));
+})();
+
+// INIT
+window.addEventListener('load', () => {
+  initSpecBrick();
+});
+
+// ── KILN MODE EASTER EGG ───────────────────────────────
+(function initKilnEgg() {
+  const heroCanvas = document.getElementById('hero-canvas');
+  if (!heroCanvas) return;
+  
+  let clicks = 0;
+  let clickTimer;
+  
+  heroCanvas.addEventListener('click', () => {
+    clicks++;
+    clearTimeout(clickTimer);
+    
+    if (clicks >= 5) {
+      clicks = 0;
+      triggerKilnMode();
+    } else {
+      clickTimer = setTimeout(() => clicks = 0, 400);
+    }
+  });
+  
+  function triggerKilnMode() {
+    if (soundEnabled && typeof playDeepThud === 'function') playDeepThud();
+    
+    // Intense audio swell
+    if (ambientGain && audioCtx && soundEnabled) {
+      ambientGain.gain.cancelScheduledValues(audioCtx.currentTime);
+      ambientGain.gain.setValueAtTime(0, audioCtx.currentTime);
+      ambientGain.gain.linearRampToValueAtTime(3.0, audioCtx.currentTime + 0.1);
+      ambientGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 3.0);
+    }
+    
+    // Find the hero scene brick and lights via window (we need a slight hack to access them)
+    // Actually, we can dispatch a custom event that makeHeroScene listens to!
+    window.dispatchEvent(new Event('triggerKilnMode'));
+    
+    // Add visual notification
+    const textEl = document.getElementById('notif-text');
+    const notif = document.getElementById('viewer-notif');
+    if (textEl && notif) {
+      textEl.textContent = '✦ KILN MODE ENGAGED. 1,050°C. ZERO COMPROMISES. ✦';
+      notif.classList.add('show');
+      setTimeout(() => notif.classList.remove('show'), 7000);
+    }
+  }
+})();
+</script>
+
+</body>
+</html>
