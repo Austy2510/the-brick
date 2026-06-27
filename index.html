@@ -1331,7 +1331,7 @@ const _brickTextures = {
 function loadBrickTextures() {
   if (_brickTextures._promise) return _brickTextures._promise;
   _brickTextures._promise = new Promise(resolve => {
-    _textureLoader.load('/textures/clay.png', t => {
+    _textureLoader.load('./textures/clay.png', t => {
       _brickTextures.diffuse = t;
       resolve();
     });
