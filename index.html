@@ -21,13 +21,19 @@
           "on-surface": "#E8DDD0",
           "outline": "#7A6E65",
           "brick-red": "#B94F2A",
-          "parchment": "#D4C5A9"
+          "parchment": "#D4C5A9",
+          "background": "#0D0C0B",
+          "brick": "#B94F2A",
+          "gold": "#C9A96E",
+          "cream": "#E8DDD0",
+          "muted": "#7A6E65"
         },
         fontFamily: {
           "display": ["Cormorant SC", "serif"],
           "body": ["Inter", "sans-serif"],
           "mono": ["JetBrains Mono", "monospace"],
           "serif-italic": ["Cormorant Garamond", "serif"],
+          "italicSerif": ["Cormorant Garamond", "serif"]
         }
       }
     }
@@ -185,13 +191,15 @@
     top: 0;
   }
   .origin-words {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    display: grid;
+    align-items: center;
+    justify-items: start;
     padding: 0 clamp(1.5rem, 8vw, 8rem);
     width: 100%;
+    height: 100%;
   }
   .origin-word {
+    grid-area: 1 / 1;
     font-family: 'Cormorant SC', serif;
     font-size: clamp(3.5rem, 12vw, 11rem);
     line-height: 1;
@@ -228,49 +236,89 @@
   }
 
   /* ── MINI GAME ── */
-  #game-brick-surface {
-    position: relative;
-    width: 100%;
-    max-width: 520px;
-    height: 280px;
-    margin: 0 auto;
-    background: #B94F2A;
-    cursor: crosshair;
-    overflow: hidden;
-  }
-  .brick-texture-line {
-    position: absolute;
-    background: rgba(0,0,0,0.15);
-    left: 0; right: 0;
-    height: 1px;
-  }
-  .imperfection {
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: rgba(30,10,5,0.55);
-    cursor: crosshair;
-    transition: transform 120ms, background 120ms, box-shadow 120ms;
-    border: 1px solid rgba(0,0,0,0.2);
-  }
-  .imperfection:hover {
-    transform: scale(1.4);
-    background: rgba(30,10,5,0.8);
-    box-shadow: 0 0 8px rgba(201,169,110,0.4);
-  }
-  .imperfection.found {
-    background: #C9A96E !important;
-    border-color: #C9A96E;
-    cursor: default;
-    transform: scale(1.3);
-    box-shadow: 0 0 12px rgba(201,169,110,0.6);
-  }
-  @keyframes timer-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
-  .timer-urgent { animation: timer-pulse 0.5s ease infinite; color: #B94F2A !important; }
+  /* Procedural Brick Texture SVG Filter */
+      .brick-texture {
+        filter: url(#brick-texture-filter);
+      }
+      
+      /* Conveyor belt animation */
+      #conveyor-belt {
+        background-color: #1A1310;
+        background-image: repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 38px,
+          #2A2320 38px,
+          #2A2320 40px
+        );
+        background-size: 80px 100%;
+      }
+      
+      @keyframes scroll-belt {
+        from { background-position-x: 0px; }
+        to { background-position-x: 80px; }
+      }
+      
+      .belt-running {
+        animation: scroll-belt 3s linear infinite;
+      }
+      
+      /* Screen shake animation */
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        15%, 45%, 75% { transform: translateX(-10px); }
+        30%, 60%, 90% { transform: translateX(10px); }
+      }
+      
+      .shake-animation {
+        animation: shake 0.25s cubic-bezier(.36,.07,.19,.97) both;
+      }
+      
+      /* Vignette Pulse Animation for critical timer state */
+      @keyframes vignette-pulse {
+        0%, 100% { opacity: 0; }
+        50% { opacity: 0.65; }
+      }
+      
+      .vignette-pulse-active {
+        animation: vignette-pulse 0.7s ease-in-out infinite;
+      }
+
+      /* 3D Brick in Hero Section */
+      .perspective-container {
+        perspective: 1200px;
+      }
+      
+      .brick-3d {
+        transform-style: preserve-3d;
+        transform: rotateX(20deg) rotateY(-30deg);
+        transition: transform 0.1s ease-out;
+      }
+      
+      .brick-face {
+        position: absolute;
+        box-sizing: border-box;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+      }
+      
+      /* Floating keyframe for correct score feedback */
+      @keyframes float-up {
+        0% { transform: translateY(0) scale(1); opacity: 1; }
+        100% { transform: translateY(-40px) scale(1.15); opacity: 0; }
+      }
+      
+      .float-animation {
+        animation: float-up 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+      }
+      
+      /* Pulse animation for 'deliberating...' text */
+      @keyframes pulse-gold {
+        0%, 100% { opacity: 0.4; }
+        50% { opacity: 1; }
+      }
+      .pulse-gold-active {
+        animation: pulse-gold 1.2s ease-in-out infinite;
+      }
 
   /* ── PRICE COUNTER ── */
   #price-counter { font-variant-numeric: tabular-nums; }
@@ -709,6 +757,20 @@
 </head>
 <body>
 
+<!-- SVG Filter Defs (Hidden) -->
+    <svg class="absolute w-0 h-0 pointer-events-none opacity-0" aria-hidden="true">
+      <filter id="brick-texture-filter">
+        <feTurbulence type="fractalNoise" baseFrequency="0.5" numOctaves="4" result="noise" />
+        <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.14 0" />
+        <feComposite operator="in" in2="SourceGraphic" />
+        <feBlend mode="multiply" in="SourceGraphic" in2="noise" />
+      </filter>
+    </svg>
+
+    <!-- Global Vignette Overlay for critical states -->
+    <div id="vignette-overlay" class="fixed inset-0 pointer-events-none z-40 opacity-0 bg-[radial-gradient(circle,transparent_35%,rgba(185,79,42,0.45)_100%)] transition-opacity duration-300"></div>
+
+
 <!-- CURSOR GLOW -->
 <div id="cursor-glow"></div>
 
@@ -823,15 +885,20 @@
 <!-- ════════════════════════════════
      ORIGIN — Clay. Water. Fire. Time.
 ════════════════════════════════ -->
-<section id="origin" class="parallax-panel" style="background:#0D0C0B;">
-  <div class="origin-words">
-    <div class="origin-word">Clay.</div>
-    <div class="origin-word">Water.</div>
-    <div class="origin-word">Fire.</div>
-    <div class="origin-word">Time.</div>
+<section id="origin" class="parallax-panel" style="background:#0D0C0B; height: 300vh;">
+  <div class="absolute top-0 left-0 w-full h-screen overflow-hidden">
+    <canvas id="origin-sequence-canvas" class="absolute inset-0 w-full h-full object-cover z-0 opacity-60"></canvas>
+    
+    <div class="origin-words relative z-10">
+      <div class="origin-word">Clay.</div>
+      <div class="origin-word">Water.</div>
+      <div class="origin-word">Fire.</div>
+      <div class="origin-word">Time.</div>
+    </div>
+    
+    <!-- Embers -->
+    <div id="ember-container" style="position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:20;"></div>
   </div>
-  <!-- Embers -->
-  <div id="ember-container" style="position:absolute;inset:0;overflow:hidden;pointer-events:none;"></div>
 </section>
 
 <div class="bleed-down"></div>
@@ -930,37 +997,166 @@
 <!-- ════════════════════════════════
      MINI GAME — THE INSPECTION
 ════════════════════════════════ -->
-<section id="inspection" class="bg-surface-warm py-32 md:py-40 px-6 md:px-16 parallax-panel">
-  <div class="max-w-2xl mx-auto text-center">
-    <span class="eyebrow">The Ritual</span>
-    <h2 class="font-display text-4xl md:text-5xl text-on-surface mb-6 tracking-wide">The Inspection.</h2>
-    <p class="font-body font-light text-on-surface/60 mb-12 text-lg leading-relaxed">
-      Before The Brick may be acquired, you must prove your eye for quality.<br/>
-      Find all 5 imperfections. You have 10 seconds.
-    </p>
+<section id="inspection" class="parallax-panel bg-[#0a0a0a] w-full py-24 px-6 md:px-12 border-b border-muted/15">
+  <div class="max-w-5xl mx-auto flex flex-col gap-12 w-full">
+      <div class="text-center flex flex-col gap-3">
+        <div class="font-mono text-xs text-gold uppercase tracking-[0.3em]">
+          QC DIVISION • CERTIFIED TERMINAL
+        </div>
+        <h2 class="font-serif text-cream text-3xl md:text-5xl tracking-[0.15em] uppercase">
+          QUALITY CONTROL
+        </h2>
+        <p class="font-sans font-light text-muted text-xs md:text-sm max-w-lg mx-auto leading-relaxed">
+          The factory lines move relentlessly. A single visual irregularity threatens our legacy. As our Chief Inspector, you must approve perfect specimens and reject flawed ones. Our tolerance is zero.
+        </p>
+      </div>
 
-    <!-- HUD -->
-    <div class="flex justify-between items-center mb-4 max-w-[520px] mx-auto">
-      <span class="font-mono text-[11px] tracking-widest text-outline uppercase" id="found-count">0 / 5 Found</span>
-      <span class="font-mono text-2xl text-secondary" id="timer">–</span>
-    </div>
+      <!-- Game Container (BRUTALIST LUXURY INTERFACE) -->
+      <div id="game-container" class="relative w-full max-w-3xl mx-auto border border-muted/20 bg-background overflow-hidden flex flex-col select-none">
+        
+        <!-- ================= START SCREEN ================= -->
+        <div id="start-screen" class="p-8 md:p-16 flex flex-col items-center text-center gap-8 bg-surface/20">
+          <div class="flex flex-col gap-2">
+            <div class="font-serif text-gold text-4xl md:text-6xl tracking-[0.2em] uppercase font-semibold">
+              THE BRICK
+            </div>
+            <div class="font-mono text-xs text-muted tracking-[0.25em] uppercase">
+              Quality Control Division
+            </div>
+          </div>
+          
+          <div class="h-px w-24 bg-gold/30"></div>
+          
+          <p class="font-sans font-light text-cream/90 text-sm md:text-base max-w-md leading-relaxed">
+            Ten specimens await your judgment per round. Visual variance, structural deviations, and mass inconsistencies must be terminated immediately. Standards are absolute.
+          </p>
+          
+          <button id="start-inspection-btn" class="border border-gold text-gold hover:bg-gold hover:text-background px-10 py-5 font-mono text-xs tracking-[0.2em] uppercase transition-all duration-300">
+            Begin Inspection
+          </button>
+          
+          <div class="font-mono text-[10px] text-muted tracking-widest uppercase">
+            Keyboard Controls: A to Approve • R to Reject
+          </div>
+        </div>
 
-    <!-- Brick Surface -->
-    <div id="game-brick-surface">
-      <!-- Texture lines -->
-      <div class="brick-texture-line" style="top:33%"></div>
-      <div class="brick-texture-line" style="top:66%"></div>
-      <!-- Imperfections injected by JS -->
-    </div>
+        <!-- ================= GAMEPLAY SCREEN ================= -->
+        <div id="gameplay-screen" class="hidden flex flex-col">
+          <!-- Game Top Bar -->
+          <div class="border-b border-muted/20 px-6 py-4 flex justify-between items-center bg-surface/10">
+            <span id="round-indicator" class="font-mono text-xs text-gold tracking-widest">
+              ROUND 1 / 3
+            </span>
+            <span class="font-serif text-cream tracking-[0.2em] text-xs md:text-sm uppercase font-medium">
+              QUALITY CONTROL
+            </span>
+            <span id="score-indicator" class="font-mono text-xs text-gold tracking-widest">
+              SCORE: 0/10
+            </span>
+          </div>
 
-    <!-- Controls -->
-    <div class="mt-8 flex flex-col items-center gap-4">
-      <button class="btn-ghost" id="game-start"><span>Begin Inspection</span></button>
-      <div id="game-result" class="font-serif-italic text-on-surface text-xl mt-4 min-h-[2rem]" aria-live="polite"></div>
-      <button class="btn-secondary hidden" id="game-restart">Attempt Again</button>
+          <!-- Conveyor Belt Area -->
+          <div id="conveyor-container" class="relative h-[280px] w-full bg-surface border-b border-muted/15 overflow-hidden flex items-center justify-center">
+            
+            <!-- Continuous Belt scrolling -->
+            <div id="conveyor-belt" class="absolute inset-0"></div>
+
+            <!-- Red Flash Overlay (Wrong) -->
+            <div id="red-flash" class="absolute inset-0 bg-brick pointer-events-none opacity-0 transition-opacity duration-200 z-10"></div>
+            <!-- Gold Flash Overlay (Correct) -->
+            <div id="gold-flash" class="absolute inset-0 bg-gold pointer-events-none opacity-0 transition-opacity duration-200 z-10"></div>
+
+            <!-- Specimen visual indicator label (Fades in 0.6s after arrival) -->
+            <div id="specimen-label" class="absolute top-6 font-mono text-xs text-gold tracking-widest opacity-0 transition-opacity duration-300 pointer-events-none z-20">
+              SPECIMEN #4029
+            </div>
+
+            <!-- Brick Spawn and Animation Area -->
+            <div id="brick-spawn-area" class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+              <!-- Brick is generated dynamically in JS -->
+            </div>
+
+            <!-- Float feedback (+1 text) container -->
+            <div id="float-container" class="absolute inset-0 pointer-events-none z-30 flex items-center justify-center"></div>
+          </div>
+
+          <!-- Timer Bar -->
+          <div class="h-1.5 w-full bg-[#1F1916] relative">
+            <div id="timer-bar" class="absolute top-0 right-0 h-full w-full bg-gold transition-colors duration-200"></div>
+          </div>
+
+          <!-- Control Panel (Buttons and Insults) -->
+          <div class="p-6 md:p-8 flex flex-col items-center gap-6 bg-surface/10">
+            
+            <!-- AI Insult/Dialogue area -->
+            <div id="verdict-display" class="min-h-[44px] flex items-center justify-center text-center px-4 w-full">
+              <!-- Pulsing deliberating indicator -->
+              <span id="deliberating-indicator" class="hidden font-mono text-xs text-gold/80 tracking-widest uppercase pulse-gold-active">
+                deliberating...
+              </span>
+              <!-- Actual Insult -->
+              <p id="insult-text" class="hidden font-italicSerif italic text-cream text-base md:text-lg max-w-xl leading-snug"></p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-4 w-full max-w-md mt-2">
+              <button id="approve-btn" class="flex-1 py-4 md:py-5 font-mono text-xs tracking-widest uppercase border border-gold text-gold hover:bg-gold hover:text-background transition-all duration-200 cursor-pointer min-h-[60px] flex flex-col items-center justify-center">
+                <span>✓ APPROVE</span>
+                <span class="text-[9px] opacity-60 tracking-widest mt-0.5 font-normal">KEY: A</span>
+              </button>
+              <button id="reject-btn" class="flex-1 py-4 md:py-5 font-mono text-xs tracking-widest uppercase border border-brick text-brick hover:bg-brick hover:text-background transition-all duration-200 cursor-pointer min-h-[60px] flex flex-col items-center justify-center">
+                <span>✗ REJECT</span>
+                <span class="text-[9px] opacity-60 tracking-widest mt-0.5 font-normal">KEY: R</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= BETWEEN ROUNDS SCREEN ================= -->
+        <div id="round-screen" class="hidden p-8 md:p-16 flex flex-col items-center text-center gap-8 bg-surface/25">
+          <div class="flex flex-col gap-2">
+            <div id="round-complete-title" class="font-serif text-cream text-3xl md:text-5xl tracking-[0.2em] uppercase font-semibold">
+              ROUND 1 COMPLETE
+            </div>
+            <div class="font-mono text-xs text-gold tracking-widest uppercase" id="round-complete-score">
+              SCORE: 8/10
+            </div>
+          </div>
+
+          <div class="h-px w-24 bg-muted/30"></div>
+
+          <p class="font-italicSerif italic text-muted text-base md:text-lg">
+            The Brick is watching.
+          </p>
+
+          <button id="continue-round-btn" class="border border-gold text-gold hover:bg-gold hover:text-background px-10 py-5 font-mono text-xs tracking-[0.2em] uppercase transition-all duration-300">
+            Continue Protocol
+          </button>
+        </div>
+
+        <!-- ================= END SCREEN ================= -->
+        <div id="end-screen" class="hidden p-8 md:p-16 flex flex-col items-center text-center gap-8 bg-surface/30 relative">
+          <!-- Celebration Canvas -->
+          <canvas id="gold-particle-canvas" class="absolute inset-0 pointer-events-none hidden"></canvas>
+
+          <div class="flex flex-col gap-3 z-10">
+            <div id="end-verdict-title" class="font-serif text-cream text-2xl md:text-4xl tracking-[0.1em] uppercase font-medium max-w-xl leading-normal">
+              EXCEPTIONAL. THE BRICK HAS NOTED YOUR PRECISION.
+            </div>
+            <div id="end-score-display" class="font-mono text-sm text-gold tracking-[0.2em] uppercase mt-2">
+              FINAL SCORE: 30/30
+            </div>
+          </div>
+
+          <div class="h-px w-24 bg-gold/30 z-10"></div>
+
+          <button id="inspect-again-btn" class="border border-gold text-gold hover:bg-gold hover:text-background px-10 py-5 font-mono text-xs tracking-[0.2em] uppercase transition-all duration-300 z-10">
+            Inspect Again
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
 <div class="bleed-up"></div>
 
@@ -1721,21 +1917,91 @@ function initSpecBrick() {
 // ── SCROLL ANIMATIONS ──────────────────────────────────
 function initScrollAnimations() {
 
-  // Origin words — staggered on scroll with scale-up parallax
-  gsap.utils.toArray('.origin-word').forEach((word, i) => {
-    gsap.fromTo(word,
-      { opacity: 0, y: 40, scale: 0.85 },
-      {
-        opacity: 1, y: 0, scale: 1, duration: 0.9, ease: 'power2.out',
-        scrollTrigger: {
-          trigger: word,
-          start: 'top 80%',
-          toggleActions: 'play none none reverse',
-        },
-        delay: i * 0.08,
+  // ── IMAGE SEQUENCE SCROLL ANIMATION ──────────────────────
+  (function initImageSequence() {
+    const canvas = document.getElementById('origin-sequence-canvas');
+    if (!canvas) return;
+    const context = canvas.getContext('2d', { alpha: false });
+    
+    // Set initial size
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      render();
+    });
+
+    const frameCount = 101;
+    const currentFrame = index => `assets/origin-sequence/ezgif-frame-${(index + 1).toString().padStart(3, '0')}.jpg`;
+    
+    const images = [];
+    const seq = { frame: 0 };
+
+    for (let i = 0; i < frameCount; i++) {
+      const img = new Image();
+      img.src = currentFrame(i);
+      images.push(img);
+    }
+
+    function render() {
+      const img = images[seq.frame];
+      if (img && img.complete && img.width > 0) {
+        const hRatio = canvas.width / img.width;
+        const vRatio = canvas.height / img.height;
+        const ratio  = Math.max(hRatio, vRatio);
+        const cw = img.width * ratio;
+        const ch = img.height * ratio;
+        const cx = (canvas.width - cw) / 2;
+        const cy = (canvas.height - ch) / 2;  
+        context.drawImage(img, 0, 0, img.width, img.height, cx, cy, cw, ch);
       }
-    );
-  });
+    }
+
+    images[0].onload = render;
+
+    // Sequence scrub
+    gsap.to(seq, {
+      frame: frameCount - 1,
+      snap: "frame",
+      ease: "none",
+      scrollTrigger: {
+        trigger: "#origin",
+        start: "top top",
+        end: "+=200%", // 200vh scroll duration
+        scrub: 0.1,
+        onUpdate: render
+      }
+    });
+
+    // Synchronized text animations
+    const words = gsap.utils.toArray('.origin-word');
+    if (words.length > 0) {
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: "#origin",
+          start: "top top",
+          end: "+=200%",
+          scrub: true
+        }
+      });
+      
+      const step = 1 / words.length;
+      words.forEach((word, i) => {
+        const start = i * step;
+        tl.fromTo(word, 
+          { opacity: 0, y: 30, scale: 0.9 }, 
+          { opacity: 1, y: 0, scale: 1, duration: step * 0.3, ease: "power1.out" }, 
+          start
+        )
+        .to(word, 
+          { opacity: 0, y: -30, scale: 1.05, duration: step * 0.3, ease: "power1.in" }, 
+          start + (step * 0.7)
+        );
+      });
+    }
+  })();
 
   // Origin embers — rising particles during scroll
   (function initEmbers() {
@@ -1827,92 +2093,584 @@ function initScrollAnimations() {
 
 // ── MINI GAME ──────────────────────────────────────────
 (function initGame() {
-  const SPOTS = 5, TIME = 10;
-  let found = 0, timeLeft = TIME, timer = null, active = false;
+// Game State Variables
+      let round = 1;
+      let roundBricks = [];
+      let brickIndex = 0;
+      let totalScore = 0;
+      let totalSeen = 0;
+      let currentBrick = null;
+      
+      let timerInterval = null;
+      let timerStart = 0;
+      let timeLimit = 3000; // ms
+      let timeLeft = 3000;
+      
+      let gameState = 'start'; // 'start', 'playing', 'transition', 'end'
+      let isProcessingDecision = false;
+      let fallbackIndex = 0;
+      let canvasAnimationId = null;
 
-  const surface  = document.getElementById('game-brick-surface');
-  const countEl  = document.getElementById('found-count');
-  const timerEl  = document.getElementById('timer');
-  const resultEl = document.getElementById('game-result');
-  const startBtn = document.getElementById('game-start');
-  const restartBtn = document.getElementById('game-restart');
+      // DOM Elements
+      const startScreen = document.getElementById('start-screen');
+      const gameplayScreen = document.getElementById('gameplay-screen');
+      const roundScreen = document.getElementById('round-screen');
+      const endScreen = document.getElementById('end-screen');
+      
+      const startBtn = document.getElementById('start-inspection-btn');
+      const continueRoundBtn = document.getElementById('continue-round-btn');
+      const inspectAgainBtn = document.getElementById('inspect-again-btn');
+      const approveBtn = document.getElementById('approve-btn');
+      const rejectBtn = document.getElementById('reject-btn');
+      
+      const roundIndicator = document.getElementById('round-indicator');
+      const scoreIndicator = document.getElementById('score-indicator');
+      const conveyorBelt = document.getElementById('conveyor-belt');
+      const conveyorContainer = document.getElementById('conveyor-container');
+      const brickSpawnArea = document.getElementById('brick-spawn-area');
+      const timerBar = document.getElementById('timer-bar');
+      const specimenLabel = document.getElementById('specimen-label');
+      
+      const deliberatingIndicator = document.getElementById('deliberating-indicator');
+      const insultText = document.getElementById('insult-text');
+      const goldFlash = document.getElementById('gold-flash');
+      const redFlash = document.getElementById('red-flash');
+      const floatContainer = document.getElementById('float-container');
+      const vignetteOverlay = document.getElementById('vignette-overlay');
 
-  function placeSpots() {
-    document.querySelectorAll('.imperfection').forEach(s => s.remove());
-    for (let i = 0; i < SPOTS; i++) {
-      const spot = document.createElement('div');
-      spot.className = 'imperfection';
-      spot.dataset.id = i;
-      spot.style.left = (8 + Math.random() * 82) + '%';
-      spot.style.top  = (8 + Math.random() * 80) + '%';
-      spot.addEventListener('click', onSpotClick);
-      surface.appendChild(spot);
-    }
-  }
 
-  function onSpotClick(e) {
-    if (!active) return;
-    const s = e.currentTarget;
-    if (s.classList.contains('found')) return;
-    s.classList.add('found');
-    found++;
-    countEl.textContent = found + ' / ' + SPOTS + ' Found';
-    playClick();
-    if (found === SPOTS) endGame(true);
-  }
-
-  function startGame() {
-    found = 0; timeLeft = TIME; active = true;
-    countEl.textContent = '0 / ' + SPOTS + ' Found';
-    timerEl.textContent = TIME;
-    timerEl.classList.remove('timer-urgent');
-    resultEl.textContent = '';
-    restartBtn.classList.add('hidden');
-    startBtn.classList.add('hidden');
-    placeSpots();
-
-    timer = setInterval(() => {
-      timeLeft--;
-      timerEl.textContent = timeLeft;
-      playTick();
-      if (timeLeft <= 3) timerEl.classList.add('timer-urgent');
-      if (timeLeft <= 0) endGame(false);
-    }, 1000);
-  }
-
-  function endGame(won) {
-    active = false;
-    clearInterval(timer);
-    timerEl.classList.remove('timer-urgent');
-
-    let msg;
-    if (won) {
-      msg = 'Your eye for quality is rare. The Brick accepts you.';
-      playSuccess();
-      launchConfetti();
-      document.getElementById('inspector-badge')?.classList.add('show');
-      const certStatus = document.getElementById('cert-status');
-      if (certStatus) {
-        certStatus.textContent = 'Inspected and Approved';
-        certStatus.style.color = '#C9A96E';
+      // Shuffler: Fisher-Yates
+      function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
       }
-    } else if (found >= 4) {
-      msg = 'Promising. The Brick will consider your application.';
-      playFail();
-    } else if (found >= 2) {
-      msg = 'You found something. The Brick found you wanting.';
-      playFail();
-    } else {
-      msg = 'Time, like The Brick, waits for no one.';
-      playFail();
-    }
 
-    resultEl.textContent = msg;
-    restartBtn.classList.remove('hidden');
-  }
+      // Generate a round's sequence
+      function generateRoundBricks(r) {
+        let perfectCount = 5;
+        let flawedCount = 5;
+        
+        if (r === 1) {
+          perfectCount = 5;
+          flawedCount = 5;
+          timeLimit = 3000;
+        } else if (r === 2) {
+          perfectCount = 4;
+          flawedCount = 6;
+          timeLimit = 2000;
+        } else if (r === 3) {
+          perfectCount = 3;
+          flawedCount = 7;
+          timeLimit = 1500;
+        }
 
-  startBtn.addEventListener('click', startGame);
-  restartBtn.addEventListener('click', startGame);
+        const list = [];
+        for (let i = 0; i < perfectCount; i++) {
+          list.push({ isFlawed: false, flawType: null });
+        }
+        
+        const flawTypes = ['COLOR_VARIANCE', 'SURFACE_DEVIATION', 'EDGE_IRREGULARITY', 'THERMAL_INCONSISTENCY', 'MASS_DISCREPANCY'];
+        for (let i = 0; i < flawedCount; i++) {
+          const randFlaw = flawTypes[Math.floor(Math.random() * flawTypes.length)];
+          list.push({ isFlawed: true, flawType: randFlaw });
+        }
+
+        return shuffleArray(list);
+      }
+
+      // Start the overall Game Session
+      function startGame() {
+        round = 1;
+        totalScore = 0;
+        totalSeen = 0;
+        gameState = 'playing';
+        stopGoldParticles();
+        
+        startScreen.classList.add('hidden');
+        roundScreen.classList.add('hidden');
+        endScreen.classList.add('hidden');
+        gameplayScreen.classList.remove('hidden');
+
+        startRound();
+      }
+
+      // Start a specific round
+      function startRound() {
+        roundBricks = generateRoundBricks(round);
+        brickIndex = 0;
+        isProcessingDecision = false;
+        
+        roundIndicator.innerText = `ROUND ${round} / 3`;
+        scoreIndicator.innerText = `SCORE: ${totalScore}/${totalSeen}`;
+        
+        // Hide insults at round start
+        deliberatingIndicator.classList.add('hidden');
+        insultText.classList.add('hidden');
+        insultText.innerText = "";
+
+        spawnBrick();
+      }
+
+      // Create and animate a brick onto the belt
+      function spawnBrick() {
+        currentBrick = roundBricks[brickIndex];
+        
+        // Clear previous brick visual structure
+        brickSpawnArea.innerHTML = "";
+        specimenLabel.style.opacity = "0";
+        vignetteOverlay.classList.remove('vignette-pulse-active');
+        vignetteOverlay.style.opacity = "0";
+
+        // Generate brick visual structure
+        const brickEl = document.createElement('div');
+        brickEl.id = 'active-brick';
+        brickEl.className = 'brick-texture relative shadow-2xl transition-all duration-400 ease-out transform pointer-events-none';
+        
+        // Standard sizing
+        brickEl.style.width = '180px';
+        brickEl.style.height = '60px';
+        brickEl.style.backgroundColor = '#B94F2A';
+        
+        // Position initial state (Right side off screen)
+        brickEl.style.position = 'absolute';
+        brickEl.style.left = '100%';
+        brickEl.style.transform = 'translateX(0)';
+
+        // Standard brick mortar lines
+        const line1 = document.createElement('div');
+        line1.className = 'absolute inset-y-0 border-r border-black/15';
+        line1.style.left = '33.3%';
+        
+        const line2 = document.createElement('div');
+        line2.className = 'absolute inset-y-0 border-r border-black/15';
+        line2.style.left = '66.6%';
+
+        const lineHorizontal = document.createElement('div');
+        lineHorizontal.className = 'absolute inset-x-0 border-t border-black/10';
+        lineHorizontal.style.top = '50%';
+
+        brickEl.appendChild(line1);
+        brickEl.appendChild(line2);
+        brickEl.appendChild(lineHorizontal);
+
+        // Apply Flaws if appropriate
+        if (currentBrick.isFlawed) {
+          switch (currentBrick.flawType) {
+            case 'COLOR_VARIANCE':
+              brickEl.style.backgroundColor = '#C4622E'; // slightly off, warmer variance
+              break;
+            case 'SURFACE_DEVIATION':
+              // small dark spot
+              const spot = document.createElement('div');
+              spot.className = 'absolute bg-[#140804]/60 rounded-full';
+              spot.style.width = '8px';
+              spot.style.height = '8px';
+              spot.style.left = `${15 + Math.random() * 70}%`;
+              spot.style.top = `${20 + Math.random() * 60}%`;
+              brickEl.appendChild(spot);
+              break;
+            case 'EDGE_IRREGULARITY':
+              // CSS clip-path corner chip
+              const corners = [
+                'polygon(6px 0, 100% 0, 100% 100%, 0 100%, 0 6px)', // TL
+                'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%)', // TR
+                'polygon(0 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%)', // BR
+                'polygon(0 0, 100% 0, 100% 100%, 6px 100%, 0 calc(100% - 6px))' // BL
+              ];
+              const randomClip = corners[Math.floor(Math.random() * corners.length)];
+              brickEl.style.clipPath = randomClip;
+              break;
+            case 'THERMAL_INCONSISTENCY':
+              // Dark gradient wash
+              brickEl.style.background = 'linear-gradient(to right, rgba(20,8,4,0.3) 0%, rgba(0,0,0,0) 65%), #B94F2A';
+              break;
+            case 'MASS_DISCREPANCY':
+              // Slightly shorter height standard is 60px, flawed is 56px
+              brickEl.style.height = '56px';
+              break;
+          }
+        }
+
+        brickSpawnArea.appendChild(brickEl);
+
+        // Trigger right-to-center conveyor animation
+        conveyorBelt.classList.add('belt-running');
+        
+        // Force reflow
+        brickEl.offsetHeight;
+
+        // Slide into Center
+        setTimeout(() => {
+          brickEl.style.left = '50%';
+          brickEl.style.transform = 'translateX(-50%)';
+        }, 20);
+
+        // Brick stops at Center at 400ms
+        setTimeout(() => {
+          conveyorBelt.classList.remove('belt-running'); // belt stops
+          startBrickTimer();
+        }, 400);
+
+        // Fading specimen metadata hint at 600ms
+        setTimeout(() => {
+          if (gameState === 'playing' && !isProcessingDecision && currentBrick === roundBricks[brickIndex]) {
+            const randID = Math.floor(1000 + Math.random() * 9000);
+            specimenLabel.innerText = `SPECIMEN #${randID}`;
+            specimenLabel.style.opacity = "1";
+          }
+        }, 600);
+      }
+
+      // Countdown Timer implementation
+      function startBrickTimer() {
+        timeLeft = timeLimit;
+        timerStart = Date.now();
+        timerBar.style.width = '100%';
+        timerBar.style.backgroundColor = '#C9A96E'; // gold
+
+        if (timerInterval) clearInterval(timerInterval);
+
+        timerInterval = setInterval(() => {
+          const elapsed = Date.now() - timerStart;
+          timeLeft = Math.max(0, timeLimit - elapsed);
+          
+          const pct = (timeLeft / timeLimit) * 100;
+          timerBar.style.width = `${pct}%`;
+
+          // Under 0.8s warning
+          if (timeLeft < 800) {
+            timerBar.style.backgroundColor = '#B94F2A'; // brick red
+            vignetteOverlay.classList.add('vignette-pulse-active');
+            vignetteOverlay.style.opacity = "1";
+          }
+
+          if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            handleDecision(null); // Timeout error
+          }
+        }, 12);
+      }
+
+      // Handle Approved or Rejected Decision
+      function handleDecision(decision) {
+        if (isProcessingDecision || gameState !== 'playing') return;
+        isProcessingDecision = true;
+
+        if (timerInterval) clearInterval(timerInterval);
+
+        // Hide specimen label immediately
+        specimenLabel.style.opacity = "0";
+        vignetteOverlay.classList.remove('vignette-pulse-active');
+        vignetteOverlay.style.opacity = "0";
+
+        const brickEl = document.getElementById('active-brick');
+        const isCorrect = (decision === 'approve' && !currentBrick.isFlawed) || 
+                          (decision === 'reject' && currentBrick.isFlawed);
+
+        if (isCorrect) {
+          totalScore++;
+          totalSeen++;
+          
+          // Flash gold success indicator
+          goldFlash.style.opacity = "0.35";
+          setTimeout(() => { goldFlash.style.opacity = "0"; }, 200);
+
+          // Spawn floating "+1" element
+          const floatTxt = document.createElement('span');
+          floatTxt.className = 'font-serif text-gold text-3xl font-semibold float-animation select-none';
+          floatTxt.innerText = "+1";
+          floatContainer.appendChild(floatTxt);
+          setTimeout(() => { floatTxt.remove(); }, 1000);
+
+          // Update Scoreboard immediately
+          scoreIndicator.innerText = `SCORE: ${totalScore}/${totalSeen}`;
+
+          // Animate brick slide-out leftward
+          if (brickEl) {
+            conveyorBelt.classList.add('belt-running');
+            brickEl.style.left = '-180px';
+            brickEl.style.transform = 'translateX(0)';
+          }
+
+          // Advance after 1.5 seconds
+          setTimeout(() => {
+            advanceSequence();
+          }, 1500);
+
+        } else {
+          totalSeen++;
+          scoreIndicator.innerText = `SCORE: ${totalScore}/${totalSeen}`;
+
+          // Shaking visual warning
+          conveyorContainer.classList.add('shake-animation');
+          setTimeout(() => {
+            conveyorContainer.classList.remove('shake-animation');
+          }, 250);
+
+          // Flash brick-red fail indicator
+          redFlash.style.opacity = "0.45";
+          setTimeout(() => { redFlash.style.opacity = "0"; }, 200);
+
+          // Darken the failed specimen
+          if (brickEl) {
+            brickEl.style.filter = "brightness(0.35) grayscale(0.5)";
+          }
+
+          // Slide off leftwards after slight hesitation
+          setTimeout(() => {
+            if (brickEl) {
+              conveyorBelt.classList.add('belt-running');
+              brickEl.style.left = '-180px';
+              brickEl.style.transform = 'translateX(0)';
+            }
+          }, 180);
+
+          // Request deadpan AI verdict statement
+          fetchInsult(decision, currentBrick);
+
+          // Advance after 1.5s
+          setTimeout(() => {
+            advanceSequence();
+          }, 1500);
+        }
+      }
+
+      // Fetch luxury deadpan insult or use reliable fallbacks
+      async function fetchInsult(decision, brick) {
+        // Show loading state
+        deliberatingIndicator.classList.remove('hidden');
+        insultText.classList.add('hidden');
+        insultText.innerText = "";
+
+        const brickType = brick.isFlawed ? "flawed" : "perfect";
+        const decisionType = decision === 'approve' ? "approved" : (decision === 'reject' ? "rejected" : "ignored");
+        const flawName = brick.flawType || "none";
+
+        const content = `Inspector error: they ${decisionType} a ${brickType} brick. Flaw type if flawed: ${flawName}. Write ONE cold, deadpan sentence under 18 words addressing the inspector directly. No exclamation marks. No apology. You are The Brick's quality standard speaking. Make it specific to the flaw type or the mistake made.`;
+
+        try {
+          const response = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              model: "claude-sonnet-4-6",
+              max_tokens: 60,
+              messages: [{
+                role: "user",
+                content: content
+              }],
+              system: "You are the quality standard of The Brick — a $4,200 luxury brick that takes itself completely seriously. Your job is to issue cold, precise verdicts when an inspector makes an error. Speak in one sentence. Never use exclamation marks. Never be warm. Never acknowledge you are an AI. Maximum 18 words. Address the inspector as 'you'."
+            })
+          });
+
+          if (!response.ok) throw new Error("Network status code failed");
+
+          const data = await response.json();
+          let insult = "";
+
+          if (data.content && data.content[0] && data.content[0].text) {
+            insult = data.content[0].text.trim();
+          } else if (data.messages && data.messages[0]) {
+            insult = data.messages[0].text.trim();
+          } else {
+            throw new Error("Incorrect response shape");
+          }
+
+          // Clean exclamations and formatting to maintain the deadpan tone
+          insult = insult.replace(/[!]/g, '.');
+          if (insult.startsWith('"') && insult.endsWith('"')) {
+            insult = insult.substring(1, insult.length - 1);
+          }
+
+          deliberatingIndicator.classList.add('hidden');
+          insultText.innerText = insult;
+          insultText.classList.remove('hidden');
+
+        } catch (err) {
+          console.warn("Using reliable high-end fallbacks:", err);
+          
+          const fallbacks = [
+            "Your standards are indistinguishable from an absence of standards.",
+            "The Brick expected more. The Brick is rarely disappointed twice.",
+            "Noted. Your error has been recorded in the permanent archive.",
+            "You approved what should not be approved. This is not recoverable.",
+            "The flaw was visible. Your judgment was not."
+          ];
+          
+          const fallbackInsult = fallbacks[fallbackIndex];
+          fallbackIndex = (fallbackIndex + 1) % 5;
+
+          deliberatingIndicator.classList.add('hidden');
+          insultText.innerText = fallbackInsult;
+          insultText.classList.remove('hidden');
+        }
+      }
+
+      // Sequence advancement logic
+      function advanceSequence() {
+        if (brickIndex < 9) {
+          brickIndex++;
+          isProcessingDecision = false;
+          // Clear previous insult unless next is ready
+          deliberatingIndicator.classList.add('hidden');
+          insultText.classList.add('hidden');
+          spawnBrick();
+        } else {
+          // Finished the round
+          if (round < 3) {
+            showRoundCompleteScreen();
+          } else {
+            showEndGameScreen();
+          }
+        }
+      }
+
+      // Display Round Transition screen
+      function showRoundCompleteScreen() {
+        gameState = 'transition';
+        gameplayScreen.classList.add('hidden');
+        roundScreen.classList.remove('hidden');
+
+        document.getElementById('round-complete-title').innerText = `ROUND ${round} COMPLETE`;
+        document.getElementById('round-complete-score').innerText = `ROUND SCORE: ${totalScore}/${totalSeen}`;
+      }
+
+      // Continue to next Round
+      function continueRound() {
+        round++;
+        gameState = 'playing';
+        roundScreen.classList.add('hidden');
+        gameplayScreen.classList.remove('hidden');
+        startRound();
+      }
+
+      // Display final results
+      function showEndGameScreen() {
+        gameState = 'end';
+        gameplayScreen.classList.add('hidden');
+        endScreen.classList.remove('hidden');
+
+        const endVerdictTitle = document.getElementById('end-verdict-title');
+        const endScoreDisplay = document.getElementById('end-score-display');
+
+        endScoreDisplay.innerText = `FINAL SCORE: ${totalScore} / 30`;
+
+        if (totalScore >= 28) {
+          endVerdictTitle.innerText = "Exceptional. The Brick has noted your precision.";
+          if (totalScore === 30) {
+            endVerdictTitle.innerHTML = "Perfect inspection. You are the first.<br><span class='text-gold font-mono text-xs uppercase tracking-widest mt-2 block'>Calibration Mastered</span>";
+            startGoldParticles();
+          }
+        } else if (totalScore >= 22) {
+          endVerdictTitle.innerText = "Sufficient. The Brick expects improvement.";
+        } else if (totalScore >= 15) {
+          endVerdictTitle.innerText = "Below standard. The Brick is unsurprised.";
+        } else {
+          endVerdictTitle.innerText = "The factory will not be calling.";
+        }
+      }
+
+      // Gold particles animation loop for flawless 30/30 scores
+      function startGoldParticles() {
+        const canvas = document.getElementById('gold-particle-canvas');
+        canvas.classList.remove('hidden');
+        const ctx = canvas.getContext('2d');
+
+        // Set dimensions explicitly
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+
+        const particles = [];
+        const colors = ['#C9A96E', '#E8DDD0', '#A3824B', '#7A6E65', '#8A6D3B'];
+
+        for (let i = 0; i < 180; i++) {
+          particles.push({
+            x: canvas.width / 2,
+            y: canvas.height * 0.65,
+            vx: (Math.random() - 0.5) * 8,
+            vy: -Math.random() * 12 - 4,
+            size: Math.random() * 4 + 2, // rectangular luxury particle chips
+            color: colors[Math.floor(Math.random() * colors.length)],
+            alpha: 1,
+            decay: Math.random() * 0.012 + 0.006,
+            gravity: 0.16,
+            friction: 0.985
+          });
+        }
+
+        function runLoop() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          let active = false;
+
+          particles.forEach(p => {
+            if (p.alpha > 0) {
+              active = true;
+              p.vx *= p.friction;
+              p.vy *= p.friction;
+              p.vy += p.gravity;
+              p.x += p.vx;
+              p.y += p.vy;
+              p.alpha -= p.decay;
+
+              ctx.save();
+              ctx.globalAlpha = Math.max(0, p.alpha);
+              ctx.fillStyle = p.color;
+              ctx.fillRect(p.x, p.y, p.size, p.size); // Sharp square dust particles
+              ctx.restore();
+            }
+          });
+
+          if (active) {
+            canvasAnimationId = requestAnimationFrame(runLoop);
+          }
+        }
+
+        runLoop();
+      }
+
+      function stopGoldParticles() {
+        if (canvasAnimationId) {
+          cancelAnimationFrame(canvasAnimationId);
+          canvasAnimationId = null;
+        }
+        const canvas = document.getElementById('gold-particle-canvas');
+        if (canvas) {
+          canvas.classList.add('hidden');
+          const ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      }
+
+      // Event Listeners initialization
+      startBtn.addEventListener('click', startGame);
+      continueRoundBtn.addEventListener('click', continueRound);
+      inspectAgainBtn.addEventListener('click', startGame);
+      
+      approveBtn.addEventListener('click', () => handleDecision('approve'));
+      rejectBtn.addEventListener('click', () => handleDecision('reject'));
+
+      // Keyboard input capture
+      document.addEventListener('keydown', (e) => {
+        // Safe check: do not trigger shortcut if user is inputting fields in forms
+        if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
+          return;
+        }
+
+        if (gameState !== 'playing' || isProcessingDecision) return;
+
+        const key = e.key.toLowerCase();
+        if (key === 'a') {
+          handleDecision('approve');
+        } else if (key === 'r') {
+          handleDecision('reject');
+        }
+      });
 })();
 
 // ── CONFETTI ───────────────────────────────────────────
