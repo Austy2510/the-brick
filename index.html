@@ -1233,8 +1233,660 @@
     $<span id="price-counter">4,200</span>
   </div>
   <p class="font-serif-italic text-outline text-lg mb-12">Price increases while you read this.</p>
-  <button class="btn-solid">Own The Legend</button>
+  <button id="own-legend-btn" class="btn-solid">Own The Legend</button>
   <p class="font-mono text-[10px] tracking-widest text-outline uppercase mt-6">Free shipping. Arrives wrapped in silence.</p>
+</section>
+
+<!-- ════════════════════════════════
+     ACQUIRE FORM — The Application
+════════════════════════════════ -->
+<section id="acquire-form">
+<style>
+  #acquire-form {
+    background: #0D0C0B;
+    padding: 6rem 1.5rem;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 9;
+  }
+  #acquire-form * { box-sizing: border-box; border-radius: 0; }
+  #acquire-form .af-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    color: #C9A96E;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    margin-bottom: 1.5rem;
+  }
+  #acquire-form .af-headline {
+    font-family: 'Cormorant SC', serif;
+    color: #E8DDD0;
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    letter-spacing: 0.04em;
+    line-height: 1.1;
+    margin: 0 0 1.5rem;
+  }
+  #acquire-form .af-subtext {
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+    color: #7A6E65;
+    font-size: 1rem;
+    line-height: 1.7;
+    max-width: 480px;
+    text-align: center;
+  }
+  #acquire-form .af-divider {
+    width: 100%;
+    max-width: 640px;
+    height: 1px;
+    background: rgba(201,169,110,0.2);
+    margin: 3rem 0;
+    border: none;
+  }
+  #acquire-form .af-form {
+    width: 100%;
+    max-width: 640px;
+  }
+  #acquire-form .af-field {
+    margin-bottom: 2.5rem;
+  }
+  #acquire-form .af-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: #C9A96E;
+    margin-bottom: 0.5rem;
+    display: block;
+    transition: color 200ms;
+  }
+  #acquire-form .af-label.af-error { color: #B94F2A; }
+  #acquire-form .af-sublabel {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: #7A6E65;
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+  #acquire-form .af-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(201,169,110,0.25);
+    padding: 0.75rem 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: #E8DDD0;
+    outline: none;
+    transition: border-color 200ms;
+    border-radius: 0;
+    -webkit-appearance: none;
+  }
+  #acquire-form .af-input:focus { border-bottom-color: #C9A96E; }
+  #acquire-form .af-input::placeholder { color: #7A6E65; }
+  #acquire-form .af-input.af-error { border-bottom-color: #B94F2A; }
+
+  /* Custom Select */
+  #acquire-form .af-select-wrap { position: relative; width: 100%; }
+  #acquire-form .af-select-trigger {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(201,169,110,0.25);
+    padding: 0.75rem 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: #7A6E65;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: border-color 200ms;
+    outline: none;
+    text-align: left;
+  }
+  #acquire-form .af-select-trigger.af-has-value { color: #E8DDD0; }
+  #acquire-form .af-select-trigger:focus { border-bottom-color: #C9A96E; }
+  #acquire-form .af-select-trigger.af-error { border-bottom-color: #B94F2A; }
+  #acquire-form .af-select-arrow {
+    width: 0; height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid #C9A96E;
+    transition: transform 200ms;
+    flex-shrink: 0;
+    margin-left: 1rem;
+  }
+  #acquire-form .af-select-wrap.af-open .af-select-arrow { transform: rotate(180deg); }
+  #acquire-form .af-select-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: #1A1310;
+    border: 1px solid rgba(201,169,110,0.2);
+    z-index: 50;
+    display: none;
+    border-radius: 0;
+  }
+  #acquire-form .af-select-wrap.af-open .af-select-dropdown { display: block; }
+  #acquire-form .af-select-option {
+    padding: 0.7rem 1rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: #E8DDD0;
+    cursor: pointer;
+    transition: background 150ms;
+  }
+  #acquire-form .af-select-option:hover { background: rgba(201,169,110,0.08); }
+
+  /* Radio Cards */
+  #acquire-form .af-cards { display: flex; flex-direction: column; gap: 0.75rem; }
+  #acquire-form .af-card {
+    background: #1A1310;
+    border: 1px solid rgba(201,169,110,0.1);
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    transition: border-color 200ms, background 200ms;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    border-radius: 0;
+  }
+  #acquire-form .af-card:hover { border-color: rgba(201,169,110,0.3); }
+  #acquire-form .af-card.af-selected {
+    border-color: #C9A96E;
+    background: rgba(201,169,110,0.05);
+  }
+  #acquire-form .af-card input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  #acquire-form .af-card-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: #E8DDD0;
+  }
+  #acquire-form .af-card-note {
+    font-family: 'Inter', sans-serif;
+    font-style: italic;
+    font-size: 0.75rem;
+    color: #7A6E65;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* Textarea */
+  #acquire-form .af-textarea {
+    width: 100%;
+    background: #1A1310;
+    border: 1px solid rgba(201,169,110,0.2);
+    padding: 1rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: #E8DDD0;
+    outline: none;
+    resize: vertical;
+    min-height: 120px;
+    transition: border-color 200ms;
+    border-radius: 0;
+    -webkit-appearance: none;
+  }
+  #acquire-form .af-textarea:focus { border-color: #C9A96E; }
+  #acquire-form .af-textarea::placeholder { color: #7A6E65; }
+  #acquire-form .af-word-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: #7A6E65;
+    text-align: right;
+    margin-top: 0.5rem;
+    transition: color 200ms;
+  }
+  #acquire-form .af-word-count.af-over { color: #B94F2A; }
+
+  /* Submit */
+  #acquire-form .af-submit {
+    width: 100%;
+    background: #C9A96E;
+    color: #0D0C0B;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    padding: 1.25rem;
+    border: none;
+    cursor: pointer;
+    transition: opacity 200ms;
+    border-radius: 0;
+    -webkit-appearance: none;
+  }
+  #acquire-form .af-submit:hover { opacity: 0.85; }
+  #acquire-form .af-submit:disabled { opacity: 0.6; cursor: default; }
+  #acquire-form .af-fine-print {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: #7A6E65;
+    text-align: center;
+    line-height: 2;
+    margin-top: 2rem;
+  }
+  #acquire-form .af-inline-error {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: #B94F2A;
+    margin-top: 0.5rem;
+    display: none;
+  }
+
+  /* Verdict */
+  #acquire-form .af-verdict {
+    max-width: 560px;
+    width: 100%;
+    text-align: center;
+    padding: 2rem 0;
+  }
+  #acquire-form .af-verdict-headline {
+    font-family: 'Cormorant SC', serif;
+    color: #E8DDD0;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    letter-spacing: 0.04em;
+    line-height: 1.15;
+  }
+  #acquire-form .af-verdict-body {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    color: #7A6E65;
+    font-size: 1.2rem;
+    line-height: 1.8;
+  }
+  #acquire-form .af-verdict-ref {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: #C9A96E;
+    letter-spacing: 0.1em;
+    line-height: 2.2;
+  }
+  #acquire-form .af-ghost-btn {
+    background: transparent;
+    border: 1px solid #C9A96E;
+    color: #C9A96E;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    padding: 1rem 2.5rem;
+    cursor: pointer;
+    transition: opacity 200ms;
+    border-radius: 0;
+  }
+  #acquire-form .af-ghost-btn:hover { opacity: 0.75; }
+
+  /* Transitions */
+  #acquire-form .af-fade { transition: opacity 600ms ease; }
+
+  /* Other territory input */
+  #acquire-form .af-other-territory {
+    margin-top: 1rem;
+    display: none;
+  }
+  #acquire-form .af-other-territory.af-visible { display: block; }
+
+  @media (max-width: 640px) {
+    #acquire-form { padding: 4rem 1.25rem; }
+    #acquire-form .af-card {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    #acquire-form .af-card-note { text-align: left; }
+  }
+</style>
+
+<div style="text-align:center;">
+  <div class="af-eyebrow">The Acquisition</div>
+  <h2 class="af-headline">Submit Your Application.</h2>
+  <p class="af-subtext">The Brick does not have a waitlist.<br>It has a consideration process.</p>
+</div>
+
+<div class="af-divider"></div>
+
+<!-- ── FORM ── -->
+<div id="af-form-container" class="af-form af-fade" style="opacity:1;">
+  <form id="af-the-form" novalidate autocomplete="off">
+
+    <!-- FIELD 1 — Full Legal Name -->
+    <div class="af-field">
+      <label class="af-label" for="af-name" id="af-name-label">Full Legal Name</label>
+      <input class="af-input" type="text" id="af-name" placeholder="As it will appear on the certificate" required>
+    </div>
+
+    <!-- FIELD 2 — Residential Address -->
+    <div class="af-field">
+      <label class="af-label" for="af-address" id="af-address-label">Residential Address</label>
+      <input class="af-input" type="text" id="af-address" placeholder="Delivery to P.O. boxes is beneath The Brick" required>
+    </div>
+
+    <!-- FIELD 3 — Country of Residence -->
+    <div class="af-field">
+      <label class="af-label" id="af-country-label">Country of Residence</label>
+      <div class="af-select-wrap" id="af-country-wrap">
+        <button type="button" class="af-select-trigger" id="af-country-trigger" aria-haspopup="listbox">
+          <span id="af-country-text">Select your territory</span>
+          <span class="af-select-arrow"></span>
+        </button>
+        <div class="af-select-dropdown" role="listbox" id="af-country-dropdown">
+          <div class="af-select-option" data-value="United Kingdom">United Kingdom</div>
+          <div class="af-select-option" data-value="Switzerland">Switzerland</div>
+          <div class="af-select-option" data-value="Monaco">Monaco</div>
+          <div class="af-select-option" data-value="France">France</div>
+          <div class="af-select-option" data-value="Germany">Germany</div>
+          <div class="af-select-option" data-value="United States">United States</div>
+          <div class="af-select-option" data-value="Other Territory">Other Territory</div>
+        </div>
+        <input type="hidden" id="af-country-value" value="">
+      </div>
+      <div class="af-other-territory" id="af-other-territory">
+        <input class="af-input" type="text" id="af-other-input" placeholder="Specify. The Brick will assess suitability.">
+      </div>
+    </div>
+
+    <!-- FIELD 4 — Annual Income -->
+    <div class="af-field">
+      <label class="af-label" id="af-income-label">Annual Income — Approximate</label>
+      <div class="af-cards" id="af-income-cards">
+        <label class="af-card" data-value="under-500k">
+          <input type="radio" name="af-income" value="under-500k">
+          <span class="af-card-label">Under $500,000</span>
+          <span class="af-card-note">The Brick wishes you well</span>
+        </label>
+        <label class="af-card" data-value="500k-2m">
+          <input type="radio" name="af-income" value="500k-2m">
+          <span class="af-card-label">$500,000 – $2M</span>
+          <span class="af-card-note">You may proceed, tentatively</span>
+        </label>
+        <label class="af-card" data-value="2m-10m">
+          <input type="radio" name="af-income" value="2m-10m">
+          <span class="af-card-label">$2M – $10M</span>
+          <span class="af-card-note">Welcome</span>
+        </label>
+        <label class="af-card" data-value="above-10m">
+          <input type="radio" name="af-income" value="above-10m">
+          <span class="af-card-label">Above $10M</span>
+          <span class="af-card-note">The Brick already knew</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- FIELD 5 — How Did You Hear -->
+    <div class="af-field">
+      <label class="af-label" id="af-hear-label">How Did You Hear About The Brick</label>
+      <div class="af-cards" id="af-hear-cards">
+        <label class="af-card" data-value="always-known">
+          <input type="radio" name="af-hear" value="always-known">
+          <span class="af-card-label">I have always known</span>
+        </label>
+        <label class="af-card" data-value="found-me">
+          <input type="radio" name="af-hear" value="found-me">
+          <span class="af-card-label">It found me</span>
+        </label>
+        <label class="af-card" data-value="whispered">
+          <input type="radio" name="af-hear" value="whispered">
+          <span class="af-card-label">A trusted source whispered its name</span>
+        </label>
+        <label class="af-card" data-value="cannot-explain">
+          <input type="radio" name="af-hear" value="cannot-explain">
+          <span class="af-card-label">I cannot explain it</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- FIELD 6 — Statement of Intent -->
+    <div class="af-field">
+      <label class="af-label" for="af-statement" id="af-statement-label">Statement of Intent</label>
+      <span class="af-sublabel">Why do you deserve The Brick. 50 words maximum.</span>
+      <textarea class="af-textarea" id="af-statement" placeholder=""></textarea>
+      <div class="af-word-count" id="af-word-count">0 / 50</div>
+      <div class="af-inline-error" id="af-brevity-error">The Brick values brevity. Reduce your statement.</div>
+    </div>
+
+    <!-- SUBMIT -->
+    <button type="button" class="af-submit" id="af-submit-btn">Submit Application</button>
+
+    <div class="af-fine-print">
+      Applications are reviewed in the order they are received.<br>
+      Processing time: when The Brick decides.<br>
+      No data is collected. No emails will be sent. This changes nothing.
+    </div>
+  </form>
+</div>
+
+<!-- ── VERDICT ── -->
+<div id="af-verdict-container" class="af-verdict af-fade" style="opacity:0; display:none;">
+  <h2 class="af-verdict-headline">Your application has been received.</h2>
+  <div style="height:2rem;"></div>
+  <p class="af-verdict-body">
+    The Brick is deliberating.<br>
+    You will be contacted. Or you will not.
+  </p>
+  <div style="height:3rem;"></div>
+  <div class="af-divider" style="margin:0 auto;"></div>
+  <div style="height:2rem;"></div>
+  <div class="af-verdict-ref" id="af-ref-line">
+    APPLICATION REF: BRICK-000000<br>
+    SUBMITTED: 00.00.0000
+  </div>
+  <div style="height:3rem;"></div>
+  <button type="button" class="af-ghost-btn" id="af-again-btn">Submit Another Application</button>
+</div>
+
+<script>
+(function() {
+  // ── Custom Select ──
+  var wrap = document.getElementById('af-country-wrap');
+  var trigger = document.getElementById('af-country-trigger');
+  var dropdown = document.getElementById('af-country-dropdown');
+  var textEl = document.getElementById('af-country-text');
+  var hiddenInput = document.getElementById('af-country-value');
+  var otherWrap = document.getElementById('af-other-territory');
+  var options = dropdown.querySelectorAll('.af-select-option');
+
+  trigger.addEventListener('click', function() {
+    wrap.classList.toggle('af-open');
+  });
+
+  options.forEach(function(opt) {
+    opt.addEventListener('click', function() {
+      var val = opt.getAttribute('data-value');
+      textEl.textContent = val;
+      hiddenInput.value = val;
+      trigger.classList.add('af-has-value');
+      trigger.classList.remove('af-error');
+      document.getElementById('af-country-label').classList.remove('af-error');
+      wrap.classList.remove('af-open');
+      if (val === 'Other Territory') {
+        otherWrap.classList.add('af-visible');
+      } else {
+        otherWrap.classList.remove('af-visible');
+      }
+    });
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!wrap.contains(e.target)) wrap.classList.remove('af-open');
+  });
+
+  // ── Radio Cards ──
+  function initCards(containerId) {
+    var container = document.getElementById(containerId);
+    var cards = container.querySelectorAll('.af-card');
+    cards.forEach(function(card) {
+      card.addEventListener('click', function() {
+        cards.forEach(function(c) { c.classList.remove('af-selected'); });
+        card.classList.add('af-selected');
+        var radio = card.querySelector('input[type="radio"]');
+        if (radio) radio.checked = true;
+      });
+    });
+  }
+  initCards('af-income-cards');
+  initCards('af-hear-cards');
+
+  // ── Word Counter ──
+  var textarea = document.getElementById('af-statement');
+  var wordCount = document.getElementById('af-word-count');
+  var brevityError = document.getElementById('af-brevity-error');
+
+  function countWords(str) {
+    var trimmed = str.trim();
+    if (trimmed === '') return 0;
+    return trimmed.split(/\s+/).length;
+  }
+
+  textarea.addEventListener('input', function() {
+    var count = countWords(textarea.value);
+    wordCount.textContent = count + ' / 50';
+    if (count > 50) {
+      wordCount.classList.add('af-over');
+    } else {
+      wordCount.classList.remove('af-over');
+      brevityError.style.display = 'none';
+    }
+  });
+
+  // ── Submit ──
+  var submitBtn = document.getElementById('af-submit-btn');
+  var formContainer = document.getElementById('af-form-container');
+  var verdictContainer = document.getElementById('af-verdict-container');
+
+  submitBtn.addEventListener('click', function() {
+    // Clear previous errors
+    document.querySelectorAll('#acquire-form .af-error').forEach(function(el) {
+      el.classList.remove('af-error');
+    });
+    brevityError.style.display = 'none';
+
+    var valid = true;
+
+    // Name
+    var nameInput = document.getElementById('af-name');
+    if (!nameInput.value.trim()) {
+      nameInput.classList.add('af-error');
+      document.getElementById('af-name-label').classList.add('af-error');
+      valid = false;
+    }
+
+    // Address
+    var addressInput = document.getElementById('af-address');
+    if (!addressInput.value.trim()) {
+      addressInput.classList.add('af-error');
+      document.getElementById('af-address-label').classList.add('af-error');
+      valid = false;
+    }
+
+    // Country
+    if (!hiddenInput.value) {
+      trigger.classList.add('af-error');
+      document.getElementById('af-country-label').classList.add('af-error');
+      valid = false;
+    }
+
+    // Income
+    var incomeChecked = document.querySelector('input[name="af-income"]:checked');
+    if (!incomeChecked) {
+      document.getElementById('af-income-label').classList.add('af-error');
+      valid = false;
+    }
+
+    // Hear
+    var hearChecked = document.querySelector('input[name="af-hear"]:checked');
+    if (!hearChecked) {
+      document.getElementById('af-hear-label').classList.add('af-error');
+      valid = false;
+    }
+
+    // Word count
+    var wc = countWords(textarea.value);
+    if (wc > 50) {
+      brevityError.style.display = 'block';
+      document.getElementById('af-statement-label').classList.add('af-error');
+      return;
+    }
+
+    if (!valid) return;
+
+    // ── Deliberate ──
+    submitBtn.textContent = 'DELIBERATING...';
+    submitBtn.disabled = true;
+
+    setTimeout(function() {
+      formContainer.style.opacity = '0';
+      setTimeout(function() {
+        formContainer.style.display = 'none';
+
+        // Generate ref
+        var ref = 'BRICK-' + String(Math.floor(100000 + Math.random() * 900000));
+        var now = new Date();
+        var dd = String(now.getDate()).padStart(2, '0');
+        var mm = String(now.getMonth() + 1).padStart(2, '0');
+        var yyyy = now.getFullYear();
+        document.getElementById('af-ref-line').innerHTML =
+          'APPLICATION REF: ' + ref + '<br>SUBMITTED: ' + dd + '.' + mm + '.' + yyyy;
+
+        verdictContainer.style.display = 'block';
+        // Force reflow
+        void verdictContainer.offsetWidth;
+        verdictContainer.style.opacity = '1';
+      }, 600);
+    }, 3000);
+  });
+
+  // ── Again Button ──
+  document.getElementById('af-again-btn').addEventListener('click', function() {
+    verdictContainer.style.opacity = '0';
+    setTimeout(function() {
+      verdictContainer.style.display = 'none';
+
+      // Reset form
+      document.getElementById('af-the-form').reset();
+      document.getElementById('af-name').classList.remove('af-error');
+      document.getElementById('af-address').classList.remove('af-error');
+      trigger.classList.remove('af-error', 'af-has-value');
+      textEl.textContent = 'Select your territory';
+      hiddenInput.value = '';
+      otherWrap.classList.remove('af-visible');
+      document.querySelectorAll('#acquire-form .af-card').forEach(function(c) {
+        c.classList.remove('af-selected');
+      });
+      document.querySelectorAll('#acquire-form .af-label').forEach(function(l) {
+        l.classList.remove('af-error');
+      });
+      wordCount.textContent = '0 / 50';
+      wordCount.classList.remove('af-over');
+      brevityError.style.display = 'none';
+      submitBtn.textContent = 'SUBMIT APPLICATION';
+      submitBtn.disabled = false;
+
+      formContainer.style.display = 'block';
+      void formContainer.offsetWidth;
+      formContainer.style.opacity = '1';
+    }, 600);
+  });
+
+  // ── Clear error on input ──
+  document.getElementById('af-name').addEventListener('input', function() {
+    this.classList.remove('af-error');
+    document.getElementById('af-name-label').classList.remove('af-error');
+  });
+  document.getElementById('af-address').addEventListener('input', function() {
+    this.classList.remove('af-error');
+    document.getElementById('af-address-label').classList.remove('af-error');
+  });
+})();
+</script>
 </section>
 
 </main>
@@ -2881,5 +3533,18 @@ window.addEventListener('load', () => {
 })();
 </script>
 
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const acquireBtn = document.getElementById('own-legend-btn');
+    const acquireForm = document.getElementById('acquire-form');
+    
+    if (acquireBtn && acquireForm) {
+      acquireBtn.addEventListener('click', () => {
+        acquireForm.style.display = 'flex';
+        acquireForm.scrollIntoView({ behavior: 'smooth' });
+      });
+    }
+  });
+</script>
 </body>
 </html>
